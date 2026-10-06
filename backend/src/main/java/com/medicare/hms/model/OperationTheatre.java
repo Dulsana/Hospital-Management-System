@@ -5,6 +5,8 @@ import lombok.*;
 
 //Tell JPA: "Create a database table for this Java class"
 @Entity
+
+//Name the database table "operation_theatres"
 @Table(name = "operation_theatres")
 @Getter
 @Setter
