@@ -18,6 +18,7 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class OperationTheatreController {
 
+    // Connection to the database tool
     private final OperationTheatreRepository otRepository;
 
     @Autowired
