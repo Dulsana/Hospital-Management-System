@@ -23,6 +23,7 @@ import lombok.*;
 @Builder
 public class OperationTheatre {
 
+    //Primary Key: Unique ID for each operating room
     @Id
     private String id;
 
