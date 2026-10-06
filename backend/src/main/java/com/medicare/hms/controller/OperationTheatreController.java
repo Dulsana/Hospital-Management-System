@@ -27,6 +27,7 @@ public class OperationTheatreController {
         this.otRepository = otRepository;
     }
 
+    //When someone sends a GET request to "/api/ot", run this function
     @GetMapping
     public ResponseEntity<List<OperationTheatre>> getOTSchedules() {
         return ResponseEntity.ok(otRepository.findAll());
