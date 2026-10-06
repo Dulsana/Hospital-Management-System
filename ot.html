@@ -425,6 +425,7 @@
       // Prevents page reload
       e.preventDefault();
 
+      // Generate a random tracking reference ID
       const ref = 'OT-REQ-' + Math.floor(Math.random() * 9000 + 1000);
       alert(`✅ OT Booking Request Submitted!\nReference: ${ref}\nOur OT coordinator will contact you within 24 hours to confirm the schedule.`);
     }
