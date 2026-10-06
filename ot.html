@@ -421,7 +421,10 @@
   <script>
     // JS Comment: Function called when the surgery booking form is submitted
     function submitOTBooking(e) {
+
+      // Prevents page reload
       e.preventDefault();
+
       const ref = 'OT-REQ-' + Math.floor(Math.random() * 9000 + 1000);
       alert(`✅ OT Booking Request Submitted!\nReference: ${ref}\nOur OT coordinator will contact you within 24 hours to confirm the schedule.`);
     }
