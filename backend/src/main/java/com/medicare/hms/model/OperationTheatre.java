@@ -34,6 +34,7 @@ public class OperationTheatre {
     // Doctor in charge (e.g., "Dr. Smith")
     private String leadSurgeon;
 
+    // Surgery name (e.g., "Heart Bypass")
     private String currentProcedure;
 
     private String status;
