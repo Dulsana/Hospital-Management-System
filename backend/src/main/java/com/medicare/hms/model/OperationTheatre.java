@@ -15,6 +15,8 @@ import lombok.*;
 
 // Empty constructor: new OperationTheatre()
 @NoArgsConstructor
+
+// Full constructor: new OperationTheatre(id, suiteName, ...)
 @AllArgsConstructor
 @Builder
 public class OperationTheatre {
