@@ -3,6 +3,7 @@ package com.medicare.hms.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+//Tell JPA: "Create a database table for this Java class"
 @Entity
 @Table(name = "operation_theatres")
 @Getter

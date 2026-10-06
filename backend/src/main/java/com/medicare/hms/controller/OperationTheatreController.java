@@ -31,7 +31,7 @@ public class OperationTheatreController {
     @GetMapping
     public ResponseEntity<List<OperationTheatre>> getOTSchedules() {
 
-        
+
         // Fetch all operation theatre rooms from DB and return them with "200 OK" status
         return ResponseEntity.ok(otRepository.findAll());
     }
