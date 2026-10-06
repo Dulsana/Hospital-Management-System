@@ -18,6 +18,8 @@ import lombok.*;
 
 // Full constructor: new OperationTheatre(id, suiteName, ...)
 @AllArgsConstructor
+
+// Allows object creation like: OperationTheatre.builder().id("1").build()
 @Builder
 public class OperationTheatre {
 
