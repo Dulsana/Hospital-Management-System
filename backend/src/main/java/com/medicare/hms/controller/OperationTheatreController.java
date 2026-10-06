@@ -10,6 +10,8 @@ import java.util.List;
 
 //Tell Spring: "This class handles web/API requests and returns JSON data"
 @RestController
+
+//The web address for this code is: http://localhost:8080/api/ot
 @RequestMapping("/api/ot")
 @CrossOrigin(origins = "*")
 public class OperationTheatreController {
