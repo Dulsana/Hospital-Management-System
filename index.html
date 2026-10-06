@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medicare Hospital | Hospital Management System & Core Branches</title>
+  <meta name="description" content="Medicare Hospital Sri Lanka - World-class medical care, Ward & Bed Management, Appointment Scheduling, Doctor Scheduling, Operation Theatre, Pharmacy, and Blood Bank Management.">
+  <meta name="keywords" content="Medicare Hospital, Doctor Channeling, Ward Management, Bed Availability, Operation Theatre, Pharmacy Management, Blood Bank, Healthcare Sri Lanka">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom CSS Design System -->
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+
+  <!-- ==========================================
+       TOP EMERGENCY NOTIFICATION BAR 
+       ========================================== -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item">
+          <i class="fa-solid fa-phone-flip"></i>
+          <span>24/7 Channeling Hotline: <strong>0115 777 888</strong></span>
+        </div>
+        <div class="top-bar-info-item">
+          <i class="fa-solid fa-truck-medical emergency-highlight"></i>
+          <span>Emergency & Ambulance: <strong class="emergency-highlight">0115 577 222</strong> </span>
+        </div>
+        
+      </div>
+      <div class="top-bar-actions">
+        <a href="appointments.html" class="portal-link" id="topCheckReport">
+          <i class="fa-solid fa-calendar-check"></i> My Appointments
+        </a>
+        <a href="login.html" class="portal-link">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In
+        </a>
+        <a href="signup.html" class="portal-link">
+          <i class="fa-solid fa-user-plus"></i> Sign Up
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MAIN NAVIGATION HEADER
+       ========================================== -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap">
+          <i class="fa-solid fa-plus"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare & Research Center</span>
+        </div>
+      </a>
+
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="departments.html" class="nav-link">Departments</a>
+        <a href="doctors.html" class="nav-link">Find a Doctor</a>
+        <a href="doctor-scheduling.html" class="nav-link">Doctor Scheduling</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
+        <a href="pharmacy.html" class="nav-link">Pharmacy</a>
+        <a href="bloodbank.html" class="nav-link">Blood Bank</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       HERO BANNER SECTION (Using Medicare Photo)
+       ========================================== -->
+  <section class="hero-section" id="home">
+    <div class="container">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          Compassionate Care, <span>World Class Medical Excellence</span>
+        </h1>
+        <p class="hero-description">
+          Integrated hospital operations covering Ward & Bed Management, Doctor Scheduling, Operation Theatres, OPD Pharmacy, and 24/7 Blood Bank.
+        </p>
+
+        <div class="hero-highlights">
+          <div class="highlight-item">
+            <i class="fa-solid fa-circle-check"></i> 200+ Expert Consultants
+          </div>
+          <div class="highlight-item">
+            <i class="fa-solid fa-circle-check"></i> 24/7 ICU & Blood Reserve
+          </div>
+        </div>
+
+        <div class="hero-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+          <a href="login.html" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size: 1rem; border-radius: 8px;">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In to Portal
+          </a>
+          <a href="signup.html" class="btn btn-secondary" style="padding: 0.85rem 1.75rem; font-size: 1rem; border-radius: 8px; background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3);">
+            <i class="fa-solid fa-user-plus"></i> Create Account
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       HERO OVERLAP: QUICK DOCTOR CHANNELING SEARCH BAR
+       ========================================== -->
+  <div class="container channeling-bar-wrapper">
+    <div class="channeling-bar">
+      <div class="channeling-form-grid">
+        <div class="form-group">
+          <label><i class="fa-solid fa-stethoscope"></i> Select Specialty</label>
+          <select id="heroSpecialty" class="form-control">
+            <option value="all">Loading Specialties...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa-solid fa-user-doctor"></i> Select Specialist Doctor</label>
+          <select id="heroDoctor" class="form-control">
+            <option value="">Select Doctor (Optional)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa-regular fa-calendar"></i> Preferred Date</label>
+          <input type="date" id="heroDate" class="form-control">
+        </div>
+
+        <button id="heroChannelBtn" class="btn btn-primary" style="height: 48px;">
+          <i class="fa-solid fa-magnifying-glass"></i> Search & Channel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       6 CORE MANAGEMENT BRANCHES & MODULES SECTION
+       ========================================== -->
+  <section class="branches-section section-padding" id="branches">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Integrated Operations</span>
+        <h2 class="section-title">Core Hospital Management Branches</h2>
+        <p class="section-subtitle">Dedicated operational departments providing real-time tracking, scheduling, medicine inventory, and emergency blood dispatch.</p>
+      </div>
+
+      <div class="branches-grid">
+        
+        <!-- BRANCH 1: Ward & Bed Management -->
+        <div class="branch-card b-ward" id="branchWard">
+          <div class="branch-header">
+            <div class="branch-icon-wrap"><i class="fa-solid fa-bed-pulse"></i></div>
+            <span class="branch-status-badge badge-live">14 Beds Free</span>
+          </div>
+          <h3 class="branch-title">Ward & Bed Management</h3>
+          <p class="branch-desc">Real-time bed occupancy tracking across ICU, CCU, Surgical, and Luxury Private Suites.</p>
+          <ul class="branch-features-list">
+            <li><i class="fa-solid fa-circle-check"></i> ICU & CCU Live Bed Tracker</li>
+            <li><i class="fa-solid fa-circle-check"></i> Patient Admission & Discharge</li>
+            <li><i class="fa-solid fa-circle-check"></i> Private Suite Reservation</li>
+          </ul>
+          <a href="wards.html" class="btn btn-secondary" style="width: 100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+            Open Ward Management <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <!-- BRANCH 2: Appointment Scheduling -->
+        <div class="branch-card b-appointment" id="branchAppointment">
+          <div class="branch-header">
+            <div class="branch-icon-wrap"><i class="fa-solid fa-calendar-check"></i></div>
+            <span class="branch-status-badge badge-active">Online Booking</span>
+          </div>
+          <h3 class="branch-title">Appointment Scheduling</h3>
+          <p class="branch-desc">Online doctor channeling, instant appointment tokens, and reference code verification.</p>
+          <ul class="branch-features-list">
+            <li><i class="fa-solid fa-circle-check"></i> Specialist Search & Filtering</li>
+            <li><i class="fa-solid fa-circle-check"></i> Instant Token Generation</li>
+            <li><i class="fa-solid fa-circle-check"></i> SMS & Email Confirmation</li>
+          </ul>
+          <a href="appointments.html" class="btn btn-primary" style="width: 100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+            Book Appointment <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <!-- BRANCH 3: Doctor Scheduling Management -->
+        <div class="branch-card b-doctor" id="branchDoctorRoster">
+          <div class="branch-header">
+            <div class="branch-icon-wrap"><i class="fa-solid fa-user-clock"></i></div>
+            <span class="branch-status-badge badge-active">200+ Consultants</span>
+          </div>
+          <h3 class="branch-title">Doctor Scheduling Roster</h3>
+          <p class="branch-desc">Weekly consultant rosters, clinic hours, consultation room assignments, and on-call schedules.</p>
+          <ul class="branch-features-list">
+            <li><i class="fa-solid fa-circle-check"></i> Weekly Duty Roster Lookup</li>
+            <li><i class="fa-solid fa-circle-check"></i> Room & Clinic Allocations</li>
+            <li><i class="fa-solid fa-circle-check"></i> Consultant Leave Tracker</li>
+          </ul>
+          <a href="doctors.html" class="btn btn-secondary" style="width: 100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+            View Duty Roster <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <!-- BRANCH 4: Operation Theatre (OT) Management -->
+        <div class="branch-card b-ot" id="branchOT">
+          <div class="branch-header">
+            <div class="branch-icon-wrap"><i class="fa-solid fa-hospital-user"></i></div>
+            <span class="branch-status-badge badge-live">3 OT Suites Active</span>
+          </div>
+          <h3 class="branch-title">Operation Theatre (OT)</h3>
+          <p class="branch-desc">Surgical suite booking, live OT timelines, surgeon allocation, and anesthesiologist rosters.</p>
+          <ul class="branch-features-list">
+            <li><i class="fa-solid fa-circle-check"></i> General, Cardiac & Neuro OTs</li>
+            <li><i class="fa-solid fa-circle-check"></i> Surgery Timeline Tracking</li>
+            <li><i class="fa-solid fa-circle-check"></i> Elective & Emergency OT Booking</li>
+          </ul>
+          <a href="ot.html" class="btn btn-secondary" style="width: 100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+            Open OT Management <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <!-- BRANCH 5: Pharmacy Management -->
+        <div class="branch-card b-pharmacy" id="branchPharmacy">
+          <div class="branch-header">
+            <div class="branch-icon-wrap"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
+            <span class="branch-status-badge badge-live">24/7 OPD Pharmacy</span>
+          </div>
+          <h3 class="branch-title">Pharmacy Management</h3>
+          <p class="branch-desc">Medicine inventory search, OPD prescription fulfillment, and e-prescription home delivery.</p>
+          <ul class="branch-features-list">
+            <li><i class="fa-solid fa-circle-check"></i> Real-time Medicine Stock Lookup</li>
+            <li><i class="fa-solid fa-circle-check"></i> E-Prescription Upload</li>
+            <li><i class="fa-solid fa-circle-check"></i> Stock Expiry & Refill Alerts</li>
+          </ul>
+          <a href="pharmacy.html" class="btn btn-secondary" style="width: 100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+            Search Pharmacy Stock <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <!-- BRANCH 6: Blood Bank Management -->
+        <div class="branch-card b-blood" id="branchBloodBank">
+          <div class="branch-header">
+            <div class="branch-icon-wrap"><i class="fa-solid fa-droplet"></i></div>
+            <span class="branch-status-badge badge-urgent">All Groups Available</span>
+          </div>
+          <h3 class="branch-title">Blood Bank Management</h3>
+          <p class="branch-desc">Live blood inventory units for all blood groups (A, B, AB, O +/-), donor portal, and urgent request dispatch.</p>
+          <ul class="branch-features-list">
+            <li><i class="fa-solid fa-circle-check"></i> Live Blood Unit Inventory</li>
+            <li><i class="fa-solid fa-circle-check"></i> Urgent Blood Request Dispatch</li>
+            <li><i class="fa-solid fa-circle-check"></i> Donor Registration Portal</li>
+          </ul>
+          <a href="bloodbank.html" class="btn btn-emergency" style="width: 100%;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+            Check Blood Reserve <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       CENTERS OF EXCELLENCE / SPECIALTIES
+       ========================================== -->
+  <section class="section-padding" id="specialties">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Specialized Healthcare</span>
+        <h2 class="section-title">Centers of Excellence</h2>
+        <p class="section-subtitle">Delivering multidisciplinary medical treatment powered by state-of-the-art diagnostic and therapeutic technology.</p>
+      </div>
+
+      <div class="specialties-grid">
+        
+        <div class="specialty-card">
+          <div class="specialty-header">
+            <div class="specialty-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+            <h3 class="specialty-title">Cardiology</h3>
+          </div>
+          <p class="specialty-desc">Advanced cath labs, 24/7 angioplasty, cardiac surgery, and preventative heart care.</p>
+          <a href="#doctors" class="specialty-link">View Cardiologists <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <div class="specialty-card">
+          <div class="specialty-header">
+            <div class="specialty-icon"><i class="fa-solid fa-brain"></i></div>
+            <h3 class="specialty-title">Neurology & Neurosurgery</h3>
+          </div>
+          <p class="specialty-desc">Comprehensive brain and spine care, stroke management unit, and neuro-rehabilitation.</p>
+          <a href="#doctors" class="specialty-link">View Neurologists <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <div class="specialty-card">
+          <div class="specialty-header">
+            <div class="specialty-icon"><i class="fa-solid fa-bone"></i></div>
+            <h3 class="specialty-title">Orthopedics & Joint Surgery</h3>
+          </div>
+          <p class="specialty-desc">Joint replacement surgeries, arthroscopy, fracture trauma management, and physical therapy.</p>
+          <a href="#doctors" class="specialty-link">View Orthopedists <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <div class="specialty-card">
+          <div class="specialty-header">
+            <div class="specialty-icon"><i class="fa-solid fa-baby"></i></div>
+            <h3 class="specialty-title">Pediatrics & Neonatal</h3>
+          </div>
+          <p class="specialty-desc">Dedicated Children's Hospital unit with level-III NICU and pediatric surgery specialists.</p>
+          <a href="#doctors" class="specialty-link">View Pediatricians <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       DOCTOR CHANNELING FINDER SECTION
+       ========================================== -->
+  <section class="section-padding channel-specialist-section" id="doctors">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Consultant Directory</span>
+        <h2 class="section-title">Channel a Specialist</h2>
+        <p class="section-subtitle">Find and book appointments with Sri Lanka's renowned medical consultants.</p>
+      </div>
+
+      <div class="doctor-search-box">
+        <div class="doctor-filter-tabs" id="filterTabs">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="doctors-grid" id="doctorsGrid">
+        <!-- Doctor Cards Rendered by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       HEALTH & WELLNESS PACKAGES
+       ========================================== -->
+  <section class="section-padding" id="packages">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Preventive Healthcare</span>
+        <h2 class="section-title">Wellness Health Checkups</h2>
+        <p class="section-subtitle">Tailored screening programs designed for early detection and lifelong health maintenance.</p>
+      </div>
+
+      <div class="packages-grid">
+        
+        <div class="package-card">
+          <h3 class="package-title">Executive Health Checkup</h3>
+          <div class="package-price">LKR 18,500 <span>/ person</span></div>
+          <ul class="package-features">
+            <li><i class="fa-solid fa-circle-check"></i> Complete Blood Count (CBC) & ESR</li>
+            <li><i class="fa-solid fa-circle-check"></i> Full Lipid & Cholesterol Profile</li>
+            <li><i class="fa-solid fa-circle-check"></i> Fasting Blood Sugar & HbA1c</li>
+            <li><i class="fa-solid fa-circle-check"></i> Liver & Kidney Function Tests</li>
+            <li><i class="fa-solid fa-circle-check"></i> Resting ECG & Chest X-Ray</li>
+          </ul>
+          <button class="btn btn-secondary" onclick="document.getElementById('appointmentModal').classList.add('active')">
+            Book Package
+          </button>
+        </div>
+
+        <div class="package-card popular">
+          <span class="package-badge">Most Popular</span>
+          <h3 class="package-title">Comprehensive Cardiac Shield</h3>
+          <div class="package-price">LKR 28,000 <span>/ person</span></div>
+          <ul class="package-features">
+            <li><i class="fa-solid fa-circle-check"></i> All Executive Checkup Tests</li>
+            <li><i class="fa-solid fa-circle-check"></i> Echocardiogram (2D Echo)</li>
+            <li><i class="fa-solid fa-circle-check"></i> Exercise Treadmill Test (ETT)</li>
+            <li><i class="fa-solid fa-circle-check"></i> Cardiac Specialist Consultation</li>
+          </ul>
+          <button class="btn btn-primary" onclick="document.getElementById('appointmentModal').classList.add('active')">
+            Book Package
+          </button>
+        </div>
+
+        <div class="package-card">
+          <h3 class="package-title">Senior Citizen Care Package</h3>
+          <div class="package-price">LKR 22,500 <span>/ person</span></div>
+          <ul class="package-features">
+            <li><i class="fa-solid fa-circle-check"></i> Comprehensive Blood & Urine Panel</li>
+            <li><i class="fa-solid fa-circle-check"></i> Bone Mineral Density Scan (DEXA)</li>
+            <li><i class="fa-solid fa-circle-check"></i> Geriatric Specialist Assessment</li>
+          </ul>
+          <button class="btn btn-secondary" onclick="document.getElementById('appointmentModal').classList.add('active')">
+            Book Package
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       HOSPITAL STATS COUNTER BAR
+       ========================================== -->
+  <section class="stats-section section-padding">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number" data-target="1000000" data-suffix="+">0</div>
+          <div class="stat-label">Patients Served</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="50" data-suffix="+">0</div>
+          <div class="stat-label">Specialist Departments</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="200" data-suffix="+">0</div>
+          <div class="stat-label">Consultant Doctors</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="24" data-suffix="/7">0</div>
+          <div class="stat-label">Emergency & Blood Reserve</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       MODAL 1: MULTI-STEP APPOINTMENT BOOKING
+       ========================================== -->
+  <div class="modal-overlay" id="appointmentModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-calendar-check"></i> Book Doctor Appointment</h3>
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Rendered dynamically by js/app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 2: 24/7 EMERGENCY ASSISTANCE
+       ========================================== -->
+  <div class="modal-overlay" id="emergencyModal">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header" style="background: var(--emergency-red);">
+        <h3 class="modal-title" style="color:#fff;"><i class="fa-solid fa-truck-medical"></i> 24/7 Emergency Dispatch</h3>
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <div style="width: 70px; height: 70px; background: #fee2e2; color: var(--emergency-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.25rem; margin: 0 auto 1.25rem;">
+          <i class="fa-solid fa-phone-volume"></i>
+        </div>
+        <h3 style="color: var(--primary-navy); margin-bottom: 0.5rem;">Need Immediate Medical Help?</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+          Our Emergency Treatment Unit (ETU) and Advanced ICU Ambulances operate 24 hours a day.
+        </p>
+        <div style="background: #fff5f5; border: 1px solid #fca5a5; padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Emergency Hotline</div>
+          <div style="font-size: 1.8rem; font-weight: 800; color: var(--emergency-red);">0115 577 222</div>
+        </div>
+        <a href="tel:0115 577 222" class="btn btn-emergency" style="width: 100%; font-size: 1.1rem; padding: 1rem;">
+          <i class="fa-solid fa-phone"></i> Call Emergency Now
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 3: ONLINE LAB REPORT CHECKER
+       ========================================== -->
+  <div class="modal-overlay" id="labReportModal">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-vial-circle-check"></i> Check Online Lab Reports</h3>
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="labReportForm">
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="labRefNo"><i class="fa-solid fa-hashtag"></i> Report Reference / Bill No.</label>
+            <input type="text" id="labRefNo" class="form-control" placeholder="e.g. LAB-2026-8891" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-magnifying-glass"></i> Check Report Status
+          </button>
+        </form>
+        <div id="labReportResult" style="margin-top: 1.5rem; display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 4: WARD & BED MANAGEMENT MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="wardModal">
+    <div class="modal-container">
+      <div class="modal-header" style="background: #0284c7;">
+        <h3 class="modal-title"><i class="fa-solid fa-bed-pulse"></i> Ward & Bed Management</h3>
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="wardModalBody"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 5: DOCTOR SCHEDULING ROSTER MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="doctorRosterModal">
+    <div class="modal-container" style="max-width: 720px;">
+      <div class="modal-header" style="background: #7c3aed;">
+        <h3 class="modal-title"><i class="fa-solid fa-user-clock"></i> Doctor Scheduling Roster</h3>
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="doctorRosterBody"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 6: OPERATION THEATRE (OT) MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="otModal">
+    <div class="modal-container">
+      <div class="modal-header" style="background: #d97706;">
+        <h3 class="modal-title"><i class="fa-solid fa-hospital-user"></i> Operation Theatre (OT) Suite</h3>
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="otModalBody"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 7: PHARMACY MANAGEMENT MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="pharmacyModal">
+    <div class="modal-container">
+      <div class="modal-header" style="background: #059669;">
+        <h3 class="modal-title"><i class="fa-solid fa-prescription-bottle-medical"></i> OPD Pharmacy Management</h3>
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="pharmacyModalBody"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 8: BLOOD BANK MANAGEMENT MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="bloodBankModal">
+    <div class="modal-container">
+      <div class="modal-header" style="background: #dc2626;">
+        <h3 class="modal-title"><i class="fa-solid fa-droplet"></i> Blood Bank Management</h3>
+        <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="bloodBankModalBody"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       FLOATING WIDGETS
+       ========================================== -->
+  <div class="floating-widgets">
+    <button class="float-btn float-emergency" onclick="document.getElementById('emergencyModal').classList.add('active')" title="24/7 Emergency Call">
+      <i class="fa-solid fa-phone-volume"></i>
+    </button>
+    <button class="float-btn float-top" id="backToTopBtn" title="Back to Top">
+      <i class="fa-solid fa-arrow-up"></i>
+    </button>
+  </div>
+
+  <!-- ==========================================
+       MAIN FOOTER
+       ========================================== -->
+  <footer class="footer" id="contact">
+    <div class="container">
+      <div class="footer-grid">
+        
+        <div class="footer-brand">
+          <a href="index.html" class="brand-logo">
+            <div class="logo-icon-wrap">
+              <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="brand-text">
+              <span class="brand-name" style="color:#fff;">MEDICARE <span>HOSPITAL</span></span>
+              <span class="brand-tagline" style="color:rgba(255,255,255,0.6);">Healthcare & Research Center</span>
+            </div>
+          </a>
+          <p>
+           Our main target is Providing a secure, efficient, and user-friendly Hospital Management System that streamlines healthcare operations, 
+           enhances patient care, and simplifies hospital administration through modern digital solutions.
+          </p>
+          <div class="footer-contacts">
+            <div><i class="fa-solid fa-location-dot" style="color:var(--bright-cyan);"></i> No. 108, Sir James Peiris Mawatha, Colombo 02</div>
+            <div><i class="fa-solid fa-envelope" style="color:var(--bright-cyan);"></i> info@medicarehospital.lk</div>
+            <div><i class="fa-solid fa-phone" style="color:var(--bright-cyan);"></i> +94 11 577 7888 / +94 11 269 1111</div>
+          </div>
+        </div>
+
+      
+
+        <div>
+          <h4 class="footer-title">Specialties</h4>
+          <div class="footer-links">
+            <a href="#specialties">Cardiology & Heart Care</a>
+            <a href="#specialties">Neurology & Neurosurgery</a>
+            <a href="#specialties">Orthopedics & Joint Care</a>
+            <a href="#specialties">Pediatrics & Neonatal</a>
+            <a href="#specialties">Oncology & Cancer Care</a>
+            <a href="#specialties">24/7 Emergency Care</a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer-title">Emergency Hotline</h4>
+          <div style="background: rgba(255,255,255,0.05); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); text-transform: uppercase;">24/7 Emergency Helpline</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #f87171; margin: 0.25rem 0;">0115 577 222</div>
+            <p style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Dedicated cardiac, trauma, and critical care ambulances ready 24/7.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; 2026 Medicare Hospital Management System. All Rights Reserved.</div>
+        <div style="display: flex; gap: 1.5rem;">
+          <a href="#" style="color: rgba(255,255,255,0.6);">Privacy Policy</a>
+          <a href="#" style="color: rgba(255,255,255,0.6);">Terms of Service</a>
+          <a href="#" style="color: rgba(255,255,255,0.6);">Patient Rights</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Script -->
+  <script src="js/app.js?v=20261004-2"></script>
+</body>
+</html>

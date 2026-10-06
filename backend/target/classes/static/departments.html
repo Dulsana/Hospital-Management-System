@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Departments — Medicare Hospital</title>
+  <meta name="description" content="Explore all specialist departments at Medicare Hospital Sri Lanka — Cardiology, Neurology, Oncology, Pediatrics and more.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .page-hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a6e 60%, #7c3aed 100%);
+      padding: 5rem 0 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-hero::after {
+      content: '';
+      position: absolute;
+      right: -100px;
+      bottom: -100px;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%);
+    }
+    .page-hero-content { position: relative; z-index: 1; }
+    .page-hero-tag {
+      display: inline-block;
+      background: rgba(167,139,250,0.15);
+      color: #a78bfa;
+      padding: 0.35rem 1rem;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(167,139,250,0.3);
+    }
+    .page-hero h1 { color: #fff; font-size: 2.6rem; margin-bottom: 0.75rem; }
+    .page-hero h1 span { color: #c4b5fd; }
+    .page-hero p { color: rgba(255,255,255,0.7); font-size: 1.05rem; max-width: 600px; }
+
+    /* Stats Strip */
+    .dept-stats-strip {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-light);
+      padding: 1.5rem 0;
+    }
+
+    .dept-stats-grid {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .dept-stat-item {
+      text-align: center;
+    }
+
+    .dept-stat-num {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--primary-blue);
+      font-family: var(--font-heading);
+      line-height: 1;
+    }
+
+    .dept-stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: 0.25rem;
+    }
+
+    /* Department Filter Tabs */
+    .dept-filter-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      padding: 2.5rem 0 1.5rem;
+    }
+
+    .dept-tab {
+      padding: 0.55rem 1.25rem;
+      border-radius: var(--radius-full);
+      border: 1.5px solid var(--border-medium);
+      background: var(--bg-surface);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .dept-tab.active {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+    }
+
+    .dept-tab:hover:not(.active) { border-color: var(--primary-blue); color: var(--primary-blue); }
+
+    /* Department Cards Grid */
+    .dept-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .dept-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .dept-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .dept-card-top {
+      padding: 1.75rem 1.75rem 1.5rem;
+      position: relative;
+    }
+
+    .dept-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #fff;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .dept-card-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--primary-navy);
+      margin-bottom: 0.35rem;
+    }
+
+    .dept-card-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+
+    .dept-features {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .dept-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.83rem;
+      color: var(--text-dark);
+    }
+
+    .dept-feature-item i { color: var(--success-green); font-size: 0.75rem; }
+
+    .dept-card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.75rem;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-subtle);
+    }
+
+    .dept-specialist-count {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .dept-specialist-count i { color: var(--primary-blue); }
+
+    .btn-view-docs {
+      padding: 0.55rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: 1.5px solid var(--primary-blue);
+      color: var(--primary-blue);
+      background: transparent;
+      text-decoration: none;
+    }
+
+    .btn-view-docs:hover {
+      background: var(--primary-blue);
+      color: #fff;
+    }
+
+    .dept-accredited-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success-green);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+  </style>
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item"><i class="fa-solid fa-phone-flip"></i><span>24/7 Channeling: <strong>0115 777 888</strong></span></div>
+        <div class="top-bar-info-item"><i class="fa-solid fa-truck-medical emergency-highlight"></i><span>Emergency: <strong class="emergency-highlight">0115 577 222</strong></span></div>
+      </div>
+      <div class="top-bar-actions">
+        <a href="login.html" class="portal-link"><i class="fa-solid fa-user-lock"></i> Patient Portal</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap"><i class="fa-solid fa-plus"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </a>
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="departments.html" class="nav-link active">Departments</a>
+        <a href="doctors.html" class="nav-link">Find a Doctor</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
+        <a href="packages.html" class="nav-link">Packages</a>
+        <a href="index.html#contact" class="nav-link">Contact</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <div class="page-hero-tag"><i class="fa-solid fa-hospital"></i> Specialized Healthcare</div>
+      <h1>Hospital <span>Departments</span></h1>
+      <p>World-class multidisciplinary medical departments powered by state-of-the-art diagnostic and therapeutic technology.</p>
+    </div>
+  </section>
+
+  <!-- Stats Strip -->
+  <div class="dept-stats-strip">
+    <div class="container">
+      <div class="dept-stats-grid">
+        <div class="dept-stat-item">
+          <div class="dept-stat-num">50+</div>
+          <div class="dept-stat-label">Departments</div>
+        </div>
+        <div class="dept-stat-item">
+          <div class="dept-stat-num">200+</div>
+          <div class="dept-stat-label">Consultants</div>
+        </div>
+        <div class="dept-stat-item">
+          <div class="dept-stat-num">1M+</div>
+          <div class="dept-stat-label">Patients Served</div>
+        </div>
+        <div class="dept-stat-item">
+          <div class="dept-stat-num">24/7</div>
+          <div class="dept-stat-label">Emergency Care</div>
+        </div>
+        <div class="dept-stat-item">
+          <div class="dept-stat-num">JCI</div>
+          <div class="dept-stat-label">Accredited</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Filter Tabs -->
+    <div class="dept-filter-row">
+      <div class="dept-tab active" onclick="filterDepts(this, 'all')">All Departments</div>
+      <div class="dept-tab" onclick="filterDepts(this, 'medical')">Medical</div>
+      <div class="dept-tab" onclick="filterDepts(this, 'surgical')">Surgical</div>
+      <div class="dept-tab" onclick="filterDepts(this, 'diagnostic')">Diagnostic</div>
+      <div class="dept-tab" onclick="filterDepts(this, 'emergency')">Emergency</div>
+      <div class="dept-tab" onclick="filterDepts(this, 'support')">Support Services</div>
+    </div>
+
+    <!-- Department Cards -->
+    <div class="dept-cards-grid" id="deptCardsGrid"></div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 Medicare Hospital Management System. All Rights Reserved.</div>
+        <div style="display:flex;gap:1.5rem;">
+          <a href="index.html" style="color:rgba(255,255,255,0.6);">Home</a>
+          <a href="doctors.html" style="color:rgba(255,255,255,0.6);">Find a Doctor</a>
+          <a href="login.html" style="color:rgba(255,255,255,0.6);">Login</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const departments = [
+      { id:1, name:'Cardiology & Heart Care', icon:'fa-heart-pulse', color:'linear-gradient(135deg,#dc2626,#b91c1c)', category:'medical', count:'18 Specialists', desc:'Advanced cardiac care including cath labs, 24/7 angioplasty, cardiac surgery, and preventative heart programs.', features:['Cardiac Catheterization Lab','24/7 Angioplasty','Echocardiography','Cardiac Rehabilitation'], accredited:true },
+      { id:2, name:'Neurology & Neurosurgery', icon:'fa-brain', color:'linear-gradient(135deg,#7c3aed,#5b21b6)', category:'medical', count:'14 Specialists', desc:'Comprehensive brain and spine care, stroke management unit, and neuro-rehabilitation programs.', features:['Stroke Management Unit','Brain & Spine Surgery','EEG & EMG Studies','Neuro-Rehabilitation'], accredited:true },
+      { id:3, name:'Orthopedics & Joint Surgery', icon:'fa-bone', color:'linear-gradient(135deg,#0284c7,#0369a1)', category:'surgical', count:'16 Specialists', desc:'Joint replacement surgeries, arthroscopy, fracture trauma management, and physical therapy.', features:['Total Knee / Hip Replacement','Arthroscopic Surgery','Spine Surgery','Sports Injury Clinic'], accredited:true },
+      { id:4, name:'Pediatrics & Neonatal', icon:'fa-baby', color:'linear-gradient(135deg,#d97706,#b45309)', category:'medical', count:'12 Specialists', desc:'Dedicated Children\'s Hospital unit with level-III NICU and pediatric surgery specialists.', features:['Level-III NICU','Pediatric Surgery','Child Development Clinic','Vaccination Programme'], accredited:true },
+      { id:5, name:'Oncology & Cancer Care', icon:'fa-ribbon', color:'linear-gradient(135deg,#059669,#047857)', category:'medical', count:'10 Specialists', desc:'Multidisciplinary cancer management including chemotherapy, radiation therapy, and surgical oncology.', features:['Chemotherapy Suite','Radiation Therapy','Tumor Board Reviews','Palliative Care'], accredited:true },
+      { id:6, name:'Radiology & Imaging', icon:'fa-x-ray', color:'linear-gradient(135deg,#475569,#334155)', category:'diagnostic', count:'8 Specialists', desc:'State-of-the-art 3T MRI, 128-slice CT, PET-CT scans, and interventional radiology.', features:['3T MRI Scanner','128-Slice CT Scan','PET-CT Imaging','Interventional Radiology'], accredited:false },
+      { id:7, name:'Emergency & Trauma', icon:'fa-truck-medical', color:'linear-gradient(135deg,#dc2626,#ef4444)', category:'emergency', count:'24/7 Team', desc:'Round-the-clock Emergency Treatment Unit with dedicated trauma bays and resuscitation rooms.', features:['24/7 ETU Coverage','Advanced Trauma Bay','Resuscitation Room','Air Ambulance Coordination'], accredited:true },
+      { id:8, name:'Gastroenterology', icon:'fa-stethoscope', color:'linear-gradient(135deg,#0d9488,#0f766e)', category:'medical', count:'9 Specialists', desc:'Comprehensive GI care with advanced endoscopy, colonoscopy, and hepatology services.', features:['Upper GI Endoscopy','Colonoscopy Suite','Hepatology Clinic','ERCP Procedures'], accredited:false },
+      { id:9, name:'Obstetrics & Gynecology', icon:'fa-venus', color:'linear-gradient(135deg,#ec4899,#be185d)', category:'surgical', count:'11 Specialists', desc:'Complete women\'s health services from prenatal care to high-risk obstetrics and gynaecological surgery.', features:['High-Risk Pregnancy Unit','Laparoscopic Gynae Surgery','Fetal Medicine Unit','Women\'s Health Screening'], accredited:true },
+      { id:10, name:'Ophthalmology', icon:'fa-eye', color:'linear-gradient(135deg,#2563eb,#1d4ed8)', category:'surgical', count:'7 Specialists', desc:'Advanced eye care with LASIK surgery, cataract procedures, and retinal treatments.', features:['LASIK & PRK Surgery','Cataract Surgery','Glaucoma Treatment','Retinal Detachment Surgery'], accredited:false },
+      { id:11, name:'Pathology & Lab Medicine', icon:'fa-flask', color:'linear-gradient(135deg,#854d0e,#713f12)', category:'diagnostic', count:'12 Lab Staff', desc:'NABL-accredited laboratory offering 500+ tests with rapid turnaround and digital reports.', features:['NABL Accredited Lab','500+ Test Portfolio','Digital Report Portal','Microbiology & Culture'], accredited:true },
+      { id:12, name:'Physiotherapy & Rehab', icon:'fa-person-walking', color:'linear-gradient(135deg,#16a34a,#15803d)', category:'support', count:'8 Therapists', desc:'Comprehensive rehabilitation services for post-surgical, neurological, and sports injury recovery.', features:['Post-Surgical Rehab','Neurological Physio','Hydrotherapy Pool','Occupational Therapy'], accredited:false },
+    ];
+
+    let activeCategory = 'all';
+
+    function renderDepts(list) {
+      const grid = document.getElementById('deptCardsGrid');
+      grid.innerHTML = list.map(d => `
+        <div class="dept-card" data-category="${d.category}">
+          <div class="dept-card-top">
+            ${d.accredited ? '<span class="dept-accredited-badge"><i class="fa-solid fa-shield-check"></i> JCI Accredited</span>' : ''}
+            <div class="dept-card-icon" style="background:${d.color};">
+              <i class="fa-solid ${d.icon}"></i>
+            </div>
+            <div class="dept-card-name">${d.name}</div>
+            <div class="dept-card-desc">${d.desc}</div>
+            <div class="dept-features">
+              ${d.features.map(f => `<div class="dept-feature-item"><i class="fa-solid fa-circle-check"></i> ${f}</div>`).join('')}
+            </div>
+          </div>
+          <div class="dept-card-bottom">
+            <div class="dept-specialist-count"><i class="fa-solid fa-user-doctor"></i> ${d.count}</div>
+            <a href="doctors.html" class="btn-view-docs"><i class="fa-solid fa-arrow-right"></i> View Doctors</a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterDepts(el, cat) {
+      document.querySelectorAll('.dept-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      activeCategory = cat;
+      const filtered = cat === 'all' ? departments : departments.filter(d => d.category === cat);
+      renderDepts(filtered);
+    }
+
+    document.getElementById('mobileToggle').addEventListener('click', () => {
+      document.getElementById('navMenu').classList.toggle('active');
+    });
+
+    renderDepts(departments);
+  </script>
+</body>
+</html>

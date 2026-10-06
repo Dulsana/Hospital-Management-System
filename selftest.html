@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Self-Test — Medicare HMS</title>
+  <style>
+    body { font-family: system-ui, Segoe UI, Arial, sans-serif; margin: 0; padding: 24px; background: #f8fafc; color: #0f172a; }
+    h1 { font-size: 1.4rem; margin: 0 0 4px; }
+    p { color: #475569; margin: 0 0 16px; max-width: 760px; }
+    button { background: #1e40af; color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 1rem; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #summary { margin: 16px 0; font-weight: 700; font-size: 1.1rem; }
+    table { border-collapse: collapse; width: 100%; max-width: 1000px; background: #fff; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: .9rem; vertical-align: top; }
+    th { background: #0f172a; color: #fff; }
+    .pass { color: #059669; font-weight: 700; }
+    .fail { color: #dc2626; font-weight: 700; }
+    .module { background: #eef2ff; font-weight: 700; }
+    code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Medicare HMS — backend self-test</h1>
+  <p>Runs Create, Read, Update and Delete against the real Spring Boot backend and MySQL for every module.
+     It uses its own test records (names contain <code>SELFTEST</code>) and deletes them again at the end.
+     A few records cannot be deleted by design (a dispensed prescription and its medicine) and stay behind marked SELFTEST.</p>
+  <button id="runBtn" onclick="runAll()">Run all tests</button>
+  <div id="summary"></div>
+  <table>
+    <thead><tr><th>Module</th><th>Check</th><th>Result</th><th>Details</th></tr></thead>
+    <tbody id="results"></tbody>
+  </table>
+
+<script>
+  const BASE = (location.port === '8080' ? '' : 'http://localhost:8080') + '/api';
+  const TAG = 'SELFTEST-' + Date.now().toString().slice(-6);
+  let passed = 0, failed = 0;
+
+  // Small fetch wrapper that always returns { status, data }
+  async function call(method, path, body) {
+    const opts = { method, headers: {} };
+    if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    const res = await fetch(BASE + path, opts);
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+    return { status: res.status, ok: res.ok, data };
+  }
+
+  function row(module, check, ok, details) {
+    ok ? passed++ : failed++;
+    document.getElementById('results').insertAdjacentHTML('beforeend',
+      `<tr><td>${module}</td><td>${check}</td><td class="${ok ? 'pass' : 'fail'}">${ok ? 'PASS' : 'FAIL'}</td><td>${details || ''}</td></tr>`);
+  }
+
+  function heading(name) {
+    document.getElementById('results').insertAdjacentHTML('beforeend', `<tr class="module"><td colspan="4">${name}</td></tr>`);
+  }
+
+  // Runs one check; a thrown error or a false result is a FAIL with the server message
+  async function check(module, name, fn) {
+    try {
+      const out = await fn();
+      if (out === true || (out && out.pass)) row(module, name, true, out && out.info);
+      else row(module, name, false, (out && out.info) || 'Unexpected result');
+    } catch (e) {
+      row(module, name, false, e.message);
+    }
+  }
+
+  const msg = r => (r.data && (r.data.message || r.data.error)) || ('HTTP ' + r.status);
+  const expectOk = (r, info) => ({ pass: r.ok, info: r.ok ? info : msg(r) });
+  const expectRefused = r => ({ pass: r.status >= 400 && r.status < 500, info: r.status >= 400 ? `Refused as expected: ${msg(r)}` : `Was allowed (HTTP ${r.status}) but should be refused` });
+
+  async function runAll() {
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true; passed = 0; failed = 0;
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('summary').textContent = 'Running...';
+    try {
+      await testAuth();
+      const ctx = await testDoctorsAndAppointments();
+      await testPharmacy(ctx);
+      await testBloodBank();
+      await testScheduling(ctx);
+      await testWardsAndBeds();
+    } catch (e) {
+      row('Runner', 'Unexpected stop', false, e.message);
+    }
+    const total = passed + failed;
+    document.getElementById('summary').innerHTML = failed === 0
+      ? `<span class="pass">All ${total} checks passed.</span>`
+      : `<span class="fail">${failed} of ${total} checks failed.</span> Send the red rows to the team.`;
+    btn.disabled = false;
+  }
+
+  // ---------------- Login ----------------
+  async function testAuth() {
+    const M = 'Login'; heading(M);
+    await check(M, 'Admin demo account logs in', async () => {
+      const r = await call('POST', '/auth/login', { email: 'admin@medicare.lk', password: 'Admin@123', role: 'admin' });
+      return { pass: r.ok && r.data.role === 'admin', info: r.ok ? 'role = ' + r.data.role : msg(r) };
+    });
+    await check(M, 'Wrong password is refused', async () =>
+      expectRefused(await call('POST', '/auth/login', { email: 'admin@medicare.lk', password: 'wrong-password' })));
+    await check(M, 'Sign-up with an invalid phone is refused', async () =>
+      expectRefused(await call('POST', '/auth/register', { firstName: 'Bad', email: TAG.toLowerCase() + '-bad@test.lk', password: 'Password123', phone: '12345' })));
+    await check(M, 'Wrong role button is refused', async () =>
+      expectRefused(await call('POST', '/auth/login', { email: 'admin@medicare.lk', password: 'Admin@123', role: 'patient' })));
+  }
+
+  // ---------------- Doctors + Appointments ----------------
+  async function testDoctorsAndAppointments() {
+    let M = 'Doctors'; heading(M);
+    const ctx = {};
+    await check(M, 'List doctors and departments', async () => {
+      const [d, dep] = [await call('GET', '/doctors'), await call('GET', '/departments')];
+      ctx.deptId = dep.ok && dep.data.length ? dep.data[0].id : null;
+      return { pass: d.ok && dep.ok && dep.data.length > 0, info: `${d.data.length} doctors, ${dep.data.length} departments` };
+    });
+    const doctor = { name: 'Dr. ' + TAG, title: 'Test Consultant', department: { id: ctx.deptId }, qualifications: 'MBBS',
+      fee: 2000, roomNumber: 'Room T1', scheduleDays: 'Mon', timeSlot: '9-12', gender: 'male' };
+    await check(M, 'Create doctor', async () => {
+      const r = await call('POST', '/doctors', doctor); ctx.doctorId = r.ok ? r.data.id : null;
+      return expectOk(r, 'id ' + ctx.doctorId);
+    });
+    await check(M, 'Read doctor by id', async () => {
+      const r = await call('GET', '/doctors/' + ctx.doctorId);
+      return { pass: r.ok && r.data.name === doctor.name, info: r.ok ? r.data.name : msg(r) };
+    });
+    await check(M, 'Update doctor fee', async () => {
+      const r = await call('PUT', '/doctors/' + ctx.doctorId, { ...doctor, fee: 2500 });
+      return { pass: r.ok && Number(r.data.fee) === 2500, info: r.ok ? 'fee = ' + r.data.fee : msg(r) };
+    });
+    await check(M, 'Missing name is refused', async () => expectRefused(await call('POST', '/doctors', { ...doctor, name: '' })));
+    await check(M, 'Invalid doctor phone is refused', async () => expectRefused(await call('PUT', '/doctors/' + ctx.doctorId, { ...doctor, phone: '07712' })));
+
+    M = 'Appointments'; heading(M);
+    const email = TAG.toLowerCase() + '@test.lk';
+    const appt = { doctorId: ctx.doctorId, patientName: 'Patient ' + TAG, patientPhone: '0770000000', patientEmail: email,
+      appointmentDate: '2027-01-15', timeSlot: 'Morning (09:00 AM - 12:00 PM)' };
+    await check(M, 'Book appointment', async () => {
+      const r = await call('POST', '/appointments', appt); ctx.apptId = r.ok ? r.data.id : null;
+      return expectOk(r, r.ok ? 'ref ' + r.data.referenceCode : '');
+    });
+    await check(M, "Patient filter returns only that patient's bookings", async () => {
+      const r = await call('GET', '/appointments?email=' + encodeURIComponent(email));
+      return { pass: r.ok && r.data.length === 1 && r.data[0].id === ctx.apptId, info: r.ok ? r.data.length + ' found' : msg(r) };
+    });
+    await check(M, 'Reschedule appointment', async () => {
+      const r = await call('PUT', '/appointments/' + ctx.apptId, { ...appt, appointmentDate: '2027-01-20' });
+      return { pass: r.ok && r.data.appointmentDate === '2027-01-20', info: r.ok ? 'date ' + r.data.appointmentDate : msg(r) };
+    });
+    await check(M, 'Invalid phone number is refused', async () =>
+      expectRefused(await call('POST', '/appointments', { ...appt, patientPhone: 'abc123' })));
+    await check(M, 'Phone with spaces is accepted and saved without them', async () => {
+      const r = await call('PUT', '/appointments/' + ctx.apptId, { ...appt, appointmentDate: '2027-01-20', patientPhone: '+94 77 123 4567' });
+      return { pass: r.ok && r.data.patientPhone === '+94771234567', info: r.ok ? 'saved as ' + r.data.patientPhone : msg(r) };
+    });
+    await check(M, 'Mark completed', async () => {
+      const r = await call('PUT', `/appointments/${ctx.apptId}/status?status=COMPLETED`);
+      return { pass: r.ok && r.data.status === 'COMPLETED', info: r.ok ? r.data.status : msg(r) };
+    });
+    await check(M, 'Missing patient name is refused', async () => expectRefused(await call('POST', '/appointments', { ...appt, patientName: '' })));
+    await check('Doctors', 'Doctor with appointments cannot be deleted', async () => expectRefused(await call('DELETE', '/doctors/' + ctx.doctorId)));
+    await check(M, 'Delete appointment', async () => expectOk(await call('DELETE', '/appointments/' + ctx.apptId)));
+    // The doctor is kept until the scheduling tests finish, then deleted there
+    return ctx;
+  }
+
+  // ---------------- Pharmacy ----------------
+  async function testPharmacy(ctx) {
+    const M = 'Pharmacy'; heading(M);
+    const P = '/pharmacy';
+    const p = {};
+    await check(M, 'Create + update category', async () => {
+      const c = await call('POST', P + '/categories', { categoryName: 'Cat ' + TAG, description: 'x', status: 'ACTIVE' });
+      if (!c.ok) return expectOk(c); p.catId = c.data.categoryId; p.catName = c.data.categoryName;
+      const u = await call('PUT', `${P}/categories/${p.catId}`, { categoryName: p.catName, description: 'updated' });
+      return { pass: u.ok && u.data.description === 'updated' && u.data.status === 'ACTIVE', info: u.ok ? 'status kept: ' + u.data.status : msg(u) };
+    });
+    await check(M, 'Supplier with invalid phone is refused', async () =>
+      expectRefused(await call('POST', P + '/suppliers', { supplierName: 'Bad ' + TAG, phone: '123', status: 'ACTIVE' })));
+    await check(M, 'Create + update supplier', async () => {
+      const s = await call('POST', P + '/suppliers', { supplierName: 'Sup ' + TAG, phone: '0110000000', status: 'ACTIVE' });
+      if (!s.ok) return expectOk(s); p.supId = s.data.supplierId;
+      const u = await call('PUT', `${P}/suppliers/${p.supId}`, { supplierName: 'Sup ' + TAG, phone: '0119999999' });
+      return { pass: u.ok && u.data.phone === '0119999999', info: u.ok ? 'phone ' + u.data.phone : msg(u) };
+    });
+    await check(M, 'Create medicine', async () => {
+      const r = await call('POST', P + '/medicines', { medicineName: 'Med ' + TAG, genericName: 'Generic', category: p.catName,
+        dosageForm: 'Tablet', strength: '10mg', unitPrice: 10, reorderLevel: 5, status: 'AVAILABLE' });
+      p.medId = r.ok ? r.data.medicineId : null; return expectOk(r, 'id ' + p.medId);
+    });
+    await check(M, 'Update medicine price', async () => {
+      const r = await call('PUT', `${P}/medicines/${p.medId}`, { medicineName: 'Med ' + TAG, category: p.catName, unitPrice: 12 });
+      return { pass: r.ok && Number(r.data.unitPrice) === 12, info: r.ok ? 'price ' + r.data.unitPrice : msg(r) };
+    });
+    const medQty = async () => (await call('GET', `${P}/medicines/${p.medId}`)).data.quantity;
+    await check(M, 'Add stock batch raises medicine quantity', async () => {
+      const r = await call('POST', P + '/stock', { medicine: { medicineId: p.medId }, batchNumber: 'B-' + TAG, quantity: 50, unitCost: 5,
+        expiryDate: '2028-12-31', receivedDate: '2026-10-01', supplier: { supplierId: p.supId }, status: 'ACTIVE' });
+      if (!r.ok) return expectOk(r); p.stockId = r.data.stockId;
+      const q = await medQty(); return { pass: q === 50, info: 'quantity ' + q };
+    });
+    await check(M, 'Edit stock batch adjusts medicine quantity', async () => {
+      const r = await call('PUT', `${P}/stock/${p.stockId}`, { medicine: { medicineId: p.medId }, batchNumber: 'B-' + TAG, quantity: 40,
+        unitCost: 5, expiryDate: '2028-12-31', receivedDate: '2026-10-01', supplier: { supplierId: p.supId } });
+      if (!r.ok) return expectOk(r);
+      const q = await medQty(); return { pass: q === 40, info: 'quantity ' + q };
+    });
+    await check(M, 'Create prescription with a medicine', async () => {
+      const r = await call('POST', P + '/prescriptions', { patientName: 'Patient ' + TAG, doctorId: ctx.doctorId, doctorName: 'Dr. ' + TAG,
+        diagnosis: 'Test', medicines: [{ medicineId: p.medId, quantity: 5, dosage: '1 tablet', frequency: 'daily', duration: '5 days' }] });
+      p.rxId = r.ok ? r.data.prescriptionId : null;
+      return { pass: r.ok && r.data.medicines.length === 1, info: r.ok ? 'id ' + p.rxId : msg(r) };
+    });
+    await check(M, 'Update prescription diagnosis', async () => {
+      const r = await call('PUT', `${P}/prescriptions/${p.rxId}`, { diagnosis: 'Updated diagnosis' });
+      return { pass: r.ok && r.data.diagnosis === 'Updated diagnosis', info: r.ok ? r.data.diagnosis : msg(r) };
+    });
+    await check(M, 'Dispense reduces stock', async () => {
+      const r = await call('POST', `${P}/prescriptions/${p.rxId}/dispense`, { pharmacistName: 'Self-test', notes: TAG });
+      if (!r.ok) return expectOk(r);
+      const q = await medQty(); return { pass: q === 35, info: `total LKR ${r.data.totalAmount}, quantity now ${q}` };
+    });
+    await check(M, 'Dispensed prescription cannot be deleted', async () => expectRefused(await call('DELETE', `${P}/prescriptions/${p.rxId}`)));
+    await check(M, 'Delete stock batch', async () => expectOk(await call('DELETE', `${P}/stock/${p.stockId}`)));
+    await check(M, 'Delete medicine used in a prescription becomes INACTIVE', async () => {
+      const r = await call('DELETE', `${P}/medicines/${p.medId}`); if (!r.ok) return expectOk(r);
+      const m = await call('GET', `${P}/medicines/${p.medId}`);
+      return { pass: m.ok && m.data.status === 'INACTIVE', info: m.ok ? 'status ' + m.data.status : msg(m) };
+    });
+    await check(M, 'Delete supplier', async () => expectOk(await call('DELETE', `${P}/suppliers/${p.supId}`), 'removed'));
+    await check(M, 'Delete category', async () => expectOk(await call('DELETE', `${P}/categories/${p.catId}`), 'removed'));
+  }
+
+  // ---------------- Blood bank ----------------
+  async function testBloodBank() {
+    const M = 'Blood Bank'; heading(M);
+    const B = '/bloodbank'; const b = {};
+    const donor = { firstName: 'Donor', lastName: TAG, dateOfBirth: '1990-01-01', gender: 'Male', bloodType: 'O+', phone: '0771234567' };
+    await check(M, 'Register donor', async () => {
+      const r = await call('POST', B + '/donors', donor); b.donorId = r.ok ? r.data.id : null;
+      return expectOk(r, r.ok ? r.data.donorNumber : '');
+    });
+    await check(M, 'Donor with invalid phone is refused', async () =>
+      expectRefused(await call('POST', B + '/donors', { ...donor, lastName: TAG + 'X', phone: '+1 555 123' })));
+    await check(M, 'Update donor', async () => {
+      const r = await call('PUT', `${B}/donors/${b.donorId}`, { ...donor, city: 'Kandy' });
+      return { pass: r.ok && r.data.city === 'Kandy', info: r.ok ? 'city ' + r.data.city : msg(r) };
+    });
+    await check(M, 'Create blood request', async () => {
+      const r = await call('POST', B + '/requests', { patientName: 'Patient ' + TAG, bloodType: 'O+', quantityRequested: 1, urgency: 'NORMAL', reason: 'Test' });
+      b.reqId = r.ok ? r.data.id : null; return expectOk(r, r.ok ? r.data.requestNumber : '');
+    });
+    await check(M, 'Update blood request', async () => {
+      const r = await call('PUT', `${B}/requests/${b.reqId}`, { patientName: 'Patient ' + TAG, bloodType: 'O+', quantityRequested: 2, reason: 'Test' });
+      return { pass: r.ok && r.data.quantityRequested === 2, info: r.ok ? 'quantity ' + r.data.quantityRequested : msg(r) };
+    });
+    await check(M, 'Delete blood request', async () => expectOk(await call('DELETE', `${B}/requests/${b.reqId}`)));
+    await check(M, 'Delete donor', async () => expectOk(await call('DELETE', `${B}/donors/${b.donorId}`), 'removed'));
+    await check(M, 'New donor gets a fresh number after a delete', async () => {
+      const r = await call('POST', B + '/donors', { ...donor, lastName: TAG + 'B' });
+      if (!r.ok) return expectOk(r);
+      await call('DELETE', `${B}/donors/${r.data.id}`);
+      return { pass: true, info: r.data.donorNumber };
+    });
+  }
+
+  // ---------------- Ward & Bed Management ----------------
+  async function testWardsAndBeds() {
+    const M = 'Wards & Beds'; heading(M);
+    const wardId = 'WD-' + TAG, bedId = 'BD-' + TAG;
+    const wardNo = 900000 + Math.floor(Math.random() * 99999);
+    const ward = { wardId, wardNumber: wardNo, wardType: 'Test Ward' };
+    const bed = { bedId, bedNumber: 1, wardId, status: 'Available' };
+    await check(M, 'Create ward', async () => expectOk(await call('POST', '/wards', ward), wardId));
+    await check(M, 'Duplicate ward ID is refused', async () => expectRefused(await call('POST', '/wards', { ...ward, wardNumber: wardNo + 1 })));
+    await check(M, 'Update ward type', async () => {
+      const r = await call('PUT', '/wards/' + wardId, { ...ward, wardType: 'Updated Ward' });
+      return { pass: r.ok && r.data.wardType === 'Updated Ward', info: r.ok ? r.data.wardType : msg(r) };
+    });
+    await check(M, 'Create bed in the ward', async () => expectOk(await call('POST', '/beds', bed), bedId));
+    await check(M, 'Same bed number twice in one ward is refused', async () => expectRefused(await call('POST', '/beds', { ...bed, bedId: bedId + 'X' })));
+    await check(M, 'Unknown bed status is refused', async () => expectRefused(await call('POST', '/beds', { ...bed, bedId: bedId + 'Y', bedNumber: 2, status: 'Broken' })));
+    await check(M, 'Mark bed Occupied with a patient', async () => {
+      const r = await call('PUT', '/beds/' + bedId, { ...bed, status: 'occupied', patientName: 'Patient ' + TAG });
+      return { pass: r.ok && r.data.status === 'Occupied' && r.data.patientName === 'Patient ' + TAG, info: r.ok ? r.data.status + ', ' + r.data.patientName : msg(r) };
+    });
+    await check(M, 'Occupied bed cannot be deleted', async () => expectRefused(await call('DELETE', '/beds/' + bedId)));
+    await check(M, 'Ward with beds cannot be deleted', async () => expectRefused(await call('DELETE', '/wards/' + wardId)));
+    await check(M, 'Discharge (Available clears patient) then delete bed', async () => {
+      const u = await call('PUT', '/beds/' + bedId, { ...bed, status: 'Available', patientName: 'Should be cleared' });
+      if (!u.ok || u.data.patientName) return { pass: false, info: u.ok ? 'patient not cleared' : msg(u) };
+      return expectOk(await call('DELETE', '/beds/' + bedId), 'patient cleared, bed deleted');
+    });
+    await check(M, 'Delete empty ward', async () => {
+      const r = await call('DELETE', '/wards/' + wardId); if (!r.ok) return expectOk(r);
+      const g = await call('GET', '/wards/' + wardId);
+      return { pass: g.status === 404, info: 'GET after delete = HTTP ' + g.status };
+    });
+  }
+
+  // ---------------- Doctor scheduling ----------------
+  async function testScheduling(ctx) {
+    const M = 'Doctor Scheduling'; heading(M);
+    const S = '/doctor-scheduling'; const s = {};
+    await check(M, 'Specialization create, update, delete', async () => {
+      const c = await call('POST', S + '/specializations', { name: 'Spec ' + TAG, description: 'x' }); if (!c.ok) return expectOk(c);
+      const u = await call('PUT', `${S}/specializations/${c.data.id}`, { name: 'Spec ' + TAG, description: 'updated' }); if (!u.ok) return expectOk(u);
+      return expectOk(await call('DELETE', `${S}/specializations/${c.data.id}`), 'description ' + u.data.description);
+    });
+    await check(M, 'Shift create + update', async () => {
+      const c = await call('POST', S + '/shifts', { shiftName: 'Shift ' + TAG, startTime: '08:00', endTime: '14:00', shiftType: 'MORNING' });
+      if (!c.ok) return expectOk(c); s.shiftId = c.data.id;
+      const u = await call('PUT', `${S}/shifts/${s.shiftId}`, { shiftName: 'Shift ' + TAG, startTime: '08:00', endTime: '15:00', shiftType: 'MORNING' });
+      return { pass: u.ok && u.data.endTime === '15:00', info: u.ok ? 'end ' + u.data.endTime : msg(u) };
+    });
+    await check(M, 'End time before start time is refused', async () =>
+      expectRefused(await call('POST', S + '/shifts', { shiftName: 'Bad ' + TAG, startTime: '14:00', endTime: '08:00' })));
+    await check(M, 'Availability create, update, delete', async () => {
+      const c = await call('POST', S + '/availability', { doctorId: ctx.doctorId, dayOfWeek: 'Monday', startTime: '08:00', endTime: '12:00' });
+      if (!c.ok) return expectOk(c);
+      const u = await call('PUT', `${S}/availability/${c.data.id}`, { doctorId: ctx.doctorId, dayOfWeek: 'Tuesday', startTime: '08:00', endTime: '12:00' });
+      if (!u.ok) return expectOk(u);
+      return expectOk(await call('DELETE', `${S}/availability/${c.data.id}`), 'day ' + u.data.dayOfWeek);
+    });
+    await check(M, 'Roster create, update, delete', async () => {
+      const c = await call('POST', S + '/rosters', { doctorId: ctx.doctorId, shiftId: s.shiftId, rosterDate: '2027-02-01', roomNumber: 'R1' });
+      if (!c.ok) return expectOk(c);
+      const u = await call('PUT', `${S}/rosters/${c.data.id}`, { doctorId: ctx.doctorId, shiftId: s.shiftId, rosterDate: '2027-02-02', roomNumber: 'R2' });
+      if (!u.ok) return expectOk(u);
+      return expectOk(await call('DELETE', `${S}/rosters/${c.data.id}`), 'room ' + u.data.roomNumber);
+    });
+    await check(M, 'Work schedule creates 30-minute slots', async () => {
+      const c = await call('POST', S + '/schedules', { doctorId: ctx.doctorId, scheduleDate: '2027-03-01', startTime: '09:00', endTime: '10:00', roomNumber: 'R1' });
+      if (!c.ok) return expectOk(c); s.schedId = c.data.id;
+      const slots = await call('GET', `${S}/slots?doctorId=${ctx.doctorId}&date=2027-03-01`);
+      return { pass: slots.ok && slots.data.length === 2, info: slots.ok ? slots.data.length + ' slots' : msg(slots) };
+    });
+    await check(M, 'Update + delete work schedule', async () => {
+      const u = await call('PUT', `${S}/schedules/${s.schedId}`, { roomNumber: 'R9', scheduleType: 'CONSULTATION' }); if (!u.ok) return expectOk(u);
+      return expectOk(await call('DELETE', `${S}/schedules/${s.schedId}`), 'room ' + u.data.roomNumber);
+    });
+    await check(M, 'Leave apply, edit, approve, delete', async () => {
+      const c = await call('POST', S + '/leave', { doctorId: ctx.doctorId, leaveType: 'ANNUAL', startDate: '2027-04-01', endDate: '2027-04-02', reason: 'x' });
+      if (!c.ok) return expectOk(c);
+      const u = await call('PUT', `${S}/leave/${c.data.id}`, { doctorId: ctx.doctorId, leaveType: 'ANNUAL', startDate: '2027-04-01', endDate: '2027-04-03', reason: 'y' });
+      if (!u.ok) return expectOk(u);
+      const a = await call('PUT', `${S}/leave/${c.data.id}/status?status=APPROVED&approvedBy=Admin`);
+      if (!a.ok || a.data.status !== 'APPROVED') return { pass: false, info: msg(a) };
+      return expectOk(await call('DELETE', `${S}/leave/${c.data.id}`), 'approved then deleted');
+    });
+    await check(M, 'Delete shift', async () => expectOk(await call('DELETE', `${S}/shifts/${s.shiftId}`)));
+    await check('Doctors', 'Delete test doctor (no appointments left)', async () => {
+      const r = await call('DELETE', '/doctors/' + ctx.doctorId); if (!r.ok) return expectOk(r);
+      const g = await call('GET', '/doctors/' + ctx.doctorId);
+      return { pass: g.status === 404, info: 'GET after delete = HTTP ' + g.status };
+    });
+  }
+</script>
+</body>
+</html>

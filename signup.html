@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — Medicare Hospital Management System</title>
+  <meta name="description" content="Register as a patient on the Medicare Hospital portal to book appointments, view lab reports and manage your health online.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      background: var(--bg-main);
+    }
+
+    /* Left Panel */
+    .auth-brand-panel {
+      flex: 1;
+      background: linear-gradient(145deg, #0f172a 0%, #1e3a6e 50%, #0f2d5a 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-brand-panel::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
+      animation: pulse-panel 5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-panel {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .auth-brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .auth-brand-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+    }
+
+    .auth-brand-text .brand-name { font-size: 1.6rem; color: #fff; }
+    .auth-brand-text .brand-name span { color: var(--bright-cyan); }
+    .auth-brand-text .brand-tagline { color: rgba(255,255,255,0.55); font-size: 0.75rem; }
+
+    .auth-panel-headline {
+      color: #fff;
+      font-size: 2rem;
+      font-family: var(--font-heading);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+      position: relative;
+      z-index: 1;
+    }
+
+    .auth-panel-headline span { color: var(--bright-cyan); }
+
+    .auth-panel-sub {
+      color: rgba(255,255,255,0.65);
+      text-align: center;
+      font-size: 0.95rem;
+      max-width: 360px;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-visual {
+      margin-top: 3rem;
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .step-vis-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: var(--transition);
+    }
+
+    .step-vis-item.active-step {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .step-vis-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .step-vis-item.active-step .step-vis-num {
+      background: var(--bright-cyan);
+      color: var(--primary-navy);
+    }
+
+    .step-vis-item.done-step .step-vis-num {
+      background: var(--success-green);
+      color: #fff;
+    }
+
+    .step-vis-label { color: rgba(255,255,255,0.8); font-size: 0.9rem; font-weight: 500; }
+    .step-vis-item.active-step .step-vis-label { color: #fff; font-weight: 700; }
+
+    /* Right Form Panel */
+    .auth-form-panel {
+      width: 520px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 3.5rem;
+      background: var(--bg-surface);
+      overflow-y: auto;
+    }
+
+    .auth-form-header { margin-bottom: 1.75rem; }
+    .auth-form-header h1 { font-size: 1.8rem; color: var(--primary-navy); margin-bottom: 0.4rem; }
+    .auth-form-header p { color: var(--text-muted); font-size: 0.95rem; }
+
+    /* Progress Bar */
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 2rem;
+    }
+
+    .prog-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1;
+    }
+
+    .prog-step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 2px solid var(--border-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+      position: relative;
+      z-index: 1;
+    }
+
+    .prog-step.active .prog-step-circle {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.15);
+    }
+
+    .prog-step.done .prog-step-circle {
+      background: var(--success-green);
+      border-color: var(--success-green);
+      color: #fff;
+    }
+
+    .prog-step-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .prog-step.active .prog-step-label { color: var(--primary-blue); }
+    .prog-step.done .prog-step-label { color: var(--success-green); }
+
+    .prog-connector {
+      flex: 1;
+      height: 2px;
+      background: var(--border-light);
+      margin-bottom: 1.1rem;
+      transition: var(--transition);
+    }
+
+    .prog-connector.done { background: var(--success-green); }
+
+    /* Form Steps */
+    .form-step { display: none; }
+    .form-step.active { display: block; }
+
+    .auth-form .form-group { margin-bottom: 1.25rem; }
+
+    .auth-form label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--primary-navy);
+      margin-bottom: 0.45rem;
+    }
+
+    .input-icon-wrap { position: relative; }
+
+    .input-icon-wrap i.field-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      font-size: 0.95rem;
+      pointer-events: none;
+    }
+
+    .input-icon-wrap .form-control { padding-left: 2.75rem; }
+
+    .auth-form .form-control {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 1.5px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-main);
+      color: var(--text-dark);
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+
+    .auth-form .form-control:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    .gender-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+    }
+
+    .gender-btn {
+      padding: 0.7rem;
+      border: 1.5px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-main);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .gender-btn.selected {
+      border-color: var(--primary-blue);
+      background: rgba(30, 64, 175, 0.06);
+      color: var(--primary-blue);
+    }
+
+    .password-strength {
+      margin-top: 0.5rem;
+      height: 4px;
+      border-radius: 99px;
+      background: var(--border-light);
+      overflow: hidden;
+    }
+
+    .password-strength-bar {
+      height: 100%;
+      border-radius: 99px;
+      width: 0%;
+      transition: all 0.4s ease;
+    }
+
+    .strength-text {
+      font-size: 0.78rem;
+      margin-top: 0.35rem;
+      font-weight: 600;
+    }
+
+    .terms-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .terms-check input { width: 16px; height: 16px; accent-color: var(--primary-blue); margin-top: 2px; flex-shrink: 0; }
+    .terms-check a { color: var(--primary-blue); font-weight: 600; }
+
+    /* Navigation Buttons */
+    .step-nav { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
+
+    .btn-prev {
+      flex: 1;
+      padding: 0.9rem;
+      border: 1.5px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text-dark);
+      transition: var(--transition);
+      font-size: 0.95rem;
+    }
+
+    .btn-prev:hover { background: var(--bg-subtle); }
+
+    .btn-next, .btn-submit {
+      flex: 2;
+      padding: 0.9rem;
+      border: none;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(30, 64, 175, 0.3);
+    }
+
+    .btn-next:hover, .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(30, 64, 175, 0.45);
+    }
+
+    .auth-footer-note {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .auth-footer-note a { color: var(--primary-blue); font-weight: 700; }
+
+    /* Success State */
+    .signup-success {
+      display: none;
+      text-align: center;
+      padding: 2rem 0;
+    }
+
+    .success-icon-wrap {
+      width: 80px;
+      height: 80px;
+      background: rgba(16, 185, 129, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.25rem;
+      color: var(--success-green);
+      margin: 0 auto 1.5rem;
+      animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes pop-in {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 900px) {
+      .auth-brand-panel { display: none; }
+      .auth-form-panel { width: 100%; padding: 2.5rem 2rem; }
+    }
+
+    @media (max-width: 480px) {
+      .auth-form-panel { padding: 2rem 1.25rem; }
+      .input-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-page">
+
+    <!-- ===== LEFT BRAND PANEL ===== -->
+    <div class="auth-brand-panel">
+      <div class="auth-brand-logo">
+        <div class="auth-brand-icon"><i class="fa-solid fa-plus"></i></div>
+        <div class="auth-brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </div>
+
+      <h2 class="auth-panel-headline">Your Health,<br><span>Our Priority</span></h2>
+      <p class="auth-panel-sub">Join thousands of patients who manage their healthcare seamlessly with the Medicare HMS Patient Portal.</p>
+
+      <div class="step-visual">
+        <div class="step-vis-item active-step" id="vis1">
+          <div class="step-vis-num">1</div>
+          <span class="step-vis-label">Personal Information</span>
+        </div>
+        <div class="step-vis-item" id="vis2">
+          <div class="step-vis-num">2</div>
+          <span class="step-vis-label">Contact Details</span>
+        </div>
+        <div class="step-vis-item" id="vis3">
+          <div class="step-vis-num">3</div>
+          <span class="step-vis-label">Account Setup</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT FORM PANEL ===== -->
+    <div class="auth-form-panel">
+      <div class="auth-form-header">
+        <h1>Create Account</h1>
+        <p>Register to access the Medicare patient portal in 3 easy steps.</p>
+      </div>
+
+      <!-- Progress Indicator -->
+      <div class="progress-steps">
+        <div class="prog-step active" id="ps1">
+          <div class="prog-step-circle">1</div>
+          <span class="prog-step-label">Personal</span>
+        </div>
+        <div class="prog-connector" id="pc1"></div>
+        <div class="prog-step" id="ps2">
+          <div class="prog-step-circle">2</div>
+          <span class="prog-step-label">Contact</span>
+        </div>
+        <div class="prog-connector" id="pc2"></div>
+        <div class="prog-step" id="ps3">
+          <div class="prog-step-circle">3</div>
+          <span class="prog-step-label">Account</span>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form class="auth-form" id="signupForm" novalidate>
+
+        <!-- ===== STEP 1: Personal ===== -->
+        <div class="form-step active" id="step1">
+          <div class="input-row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <div class="input-icon-wrap">
+                <i class="fa-solid fa-user field-icon"></i>
+                <input type="text" id="firstName" class="form-control" placeholder="e.g. Kasun" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <div class="input-icon-wrap">
+                <i class="fa-solid fa-user field-icon"></i>
+                <input type="text" id="lastName" class="form-control" placeholder="e.g. Perera" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="nicPassport">NIC / Passport No.</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-id-card field-icon"></i>
+              <input type="text" id="nicPassport" class="form-control" placeholder="e.g. 199512345678" required>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="form-group">
+              <label for="dob">Date of Birth</label>
+              <div class="input-icon-wrap">
+                <i class="fa-regular fa-calendar field-icon"></i>
+                <input type="date" id="dob" class="form-control" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="bloodGroup">Blood Group</label>
+              <select id="bloodGroup" class="form-control" required>
+                <option value="">Select...</option>
+                <option>A+</option><option>A-</option>
+                <option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option>
+                <option>O+</option><option>O-</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Gender</label>
+            <div class="gender-row">
+              <button type="button" class="gender-btn" data-gender="male" onclick="selectGender(this)"><i class="fa-solid fa-mars"></i> Male</button>
+              <button type="button" class="gender-btn" data-gender="female" onclick="selectGender(this)"><i class="fa-solid fa-venus"></i> Female</button>
+              <button type="button" class="gender-btn" data-gender="other" onclick="selectGender(this)"><i class="fa-solid fa-genderless"></i> Other</button>
+            </div>
+            <input type="hidden" id="genderValue">
+          </div>
+
+          <div class="step-nav">
+            <button type="button" class="btn-next" onclick="goStep(2)">
+              Continue <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ===== STEP 2: Contact ===== -->
+        <div class="form-step" id="step2">
+          <div class="form-group">
+            <label for="phone">Mobile Number</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-phone field-icon"></i>
+              <input type="tel" pattern="(?:0|\+94(?: |-)?)[0-9]{2}(?: |-)?[0-9]{3}(?: |-)?[0-9]{4}" title="Sri Lankan number, e.g. 0771234567 or +94 77 123 4567" id="phone" class="form-control" placeholder="+94 71 234 5678" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <div class="input-icon-wrap">
+              <i class="fa-regular fa-envelope field-icon"></i>
+              <input type="email" id="email" class="form-control" placeholder="e.g. kasun@gmail.com" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Home Address</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-location-dot field-icon"></i>
+              <input type="text" id="address" class="form-control" placeholder="e.g. No. 12, Galle Road, Colombo 03" required>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="form-group">
+              <label for="city">City</label>
+              <input type="text" id="city" class="form-control" placeholder="Colombo" required>
+            </div>
+            <div class="form-group">
+              <label for="district">District</label>
+              <select id="district" class="form-control" required>
+                <option value="">Select...</option>
+                <option>Colombo</option><option>Gampaha</option><option>Kalutara</option>
+                <option>Kandy</option><option>Matale</option><option>Nuwara Eliya</option>
+                <option>Galle</option><option>Matara</option><option>Hambantota</option>
+                <option>Jaffna</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="emergencyContact">Emergency Contact Name &amp; Phone</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-phone-volume field-icon"></i>
+              <input type="text" id="emergencyContact" class="form-control" placeholder="e.g. Nimal Perera - +94 77 987 6543">
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <button type="button" class="btn-prev" onclick="goStep(1)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <button type="button" class="btn-next" onclick="goStep(3)">Continue <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- ===== STEP 3: Account Setup ===== -->
+        <div class="form-step" id="step3">
+          <div class="form-group">
+            <label for="newEmail">Account Email</label>
+            <div class="input-icon-wrap">
+              <i class="fa-regular fa-envelope field-icon"></i>
+              <input type="email" id="newEmail" class="form-control" placeholder="This will be your login email" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="newPassword">Password</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-lock field-icon"></i>
+              <input type="password" id="newPassword" class="form-control" placeholder="Min. 8 characters" required oninput="checkStrength(this.value)">
+            </div>
+            <div class="password-strength">
+              <div class="password-strength-bar" id="strengthBar"></div>
+            </div>
+            <div class="strength-text" id="strengthText" style="color:var(--text-light);">Enter a password</div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-lock field-icon"></i>
+              <input type="password" id="confirmPassword" class="form-control" placeholder="Re-enter your password" required>
+            </div>
+          </div>
+
+          <div class="terms-check">
+            <input type="checkbox" id="termsCheck" required>
+            <label for="termsCheck">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a> of Medicare Hospital Management System.</label>
+          </div>
+
+          <div class="step-nav">
+            <button type="button" class="btn-prev" onclick="goStep(2)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <button type="submit" class="btn-submit">
+              <i class="fa-solid fa-user-plus"></i> Create Account
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Success State -->
+      <div class="signup-success" id="signupSuccess">
+        <div class="success-icon-wrap"><i class="fa-solid fa-circle-check"></i></div>
+        <h2 style="color:var(--primary-navy); margin-bottom:0.5rem;">Account Created!</h2>
+        <p style="color:var(--text-muted); margin-bottom:1.75rem;">Your Medicare patient account is ready. Please log in to continue.</p>
+        <a href="login.html" class="btn btn-primary" style="width:100%; justify-content:center;">
+          <i class="fa-solid fa-right-to-bracket"></i> Go to Login
+        </a>
+      </div>
+
+      <div class="auth-footer-note" id="signinLink">
+        Already have an account? <a href="login.html">Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js?v=20261004-2"></script>
+  <script>
+    let currentStep = 1;
+    let selectedGender = '';
+
+    function selectGender(btn) {
+      document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedGender = btn.dataset.gender;
+      document.getElementById('genderValue').value = selectedGender;
+    }
+
+    // This form uses novalidate, so the phone format is checked here before leaving the Contact step
+    function phoneIsOk() {
+      const phone = document.getElementById('phone');
+      if (isValidPhone(phone.value)) return true;
+      alert('Please enter a valid Sri Lankan phone number, e.g. 0771234567 or +94 77 123 4567.');
+      phone.focus();
+      return false;
+    }
+
+    function goStep(step) {
+      if (currentStep === 2 && step === 3 && !phoneIsOk()) return;
+      document.getElementById('step' + currentStep).classList.remove('active');
+      currentStep = step;
+      document.getElementById('step' + currentStep).classList.add('active');
+      updateProgress(step);
+    }
+
+    function updateProgress(step) {
+      for (let i = 1; i <= 3; i++) {
+        const ps = document.getElementById('ps' + i);
+        const vis = document.getElementById('vis' + i);
+        if (i < step) {
+          ps.className = 'prog-step done';
+          ps.querySelector('.prog-step-circle').innerHTML = '<i class="fa-solid fa-check"></i>';
+          if (vis) { vis.classList.remove('active-step'); vis.classList.add('done-step'); }
+        } else if (i === step) {
+          ps.className = 'prog-step active';
+          ps.querySelector('.prog-step-circle').textContent = i;
+          if (vis) { vis.classList.add('active-step'); vis.classList.remove('done-step'); }
+        } else {
+          ps.className = 'prog-step';
+          ps.querySelector('.prog-step-circle').textContent = i;
+          if (vis) { vis.classList.remove('active-step', 'done-step'); }
+        }
+      }
+      for (let i = 1; i <= 2; i++) {
+        const pc = document.getElementById('pc' + i);
+        if (i < step) pc.classList.add('done'); else pc.classList.remove('done');
+      }
+    }
+
+    function checkStrength(val) {
+      const bar = document.getElementById('strengthBar');
+      const text = document.getElementById('strengthText');
+      let score = 0;
+      if (val.length >= 8) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+
+      const levels = [
+        { w: '25%', color: '#ef4444', label: 'Weak' },
+        { w: '50%', color: '#f59e0b', label: 'Fair' },
+        { w: '75%', color: '#3b82f6', label: 'Good' },
+        { w: '100%', color: '#10b981', label: 'Strong' }
+      ];
+
+      if (val.length === 0) {
+        bar.style.width = '0%';
+        text.textContent = 'Enter a password';
+        text.style.color = 'var(--text-light)';
+      } else {
+        const level = levels[Math.min(score - 1, 3)];
+        bar.style.width = level.w;
+        bar.style.background = level.color;
+        text.textContent = level.label + ' password';
+        text.style.color = level.color;
+      }
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('newPassword').value;
+      const cpwd = document.getElementById('confirmPassword').value;
+      const terms = document.getElementById('termsCheck').checked;
+
+      if (pwd !== cpwd) {
+        alert('Passwords do not match.');
+        return;
+      }
+      if (!terms) {
+        alert('Please accept the Terms of Service.');
+        return;
+      }
+      if (pwd.length < 8) {
+        alert('Password must be at least 8 characters.');
+        return;
+      }
+      if (!isValidPhone(document.getElementById('phone').value)) {
+        goStep(2);
+        phoneIsOk();
+        return;
+      }
+
+      const val = id => document.getElementById(id).value.trim();
+      const submitBtn = document.querySelector('#signupForm .btn-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating account...';
+
+      Auth.register({
+        firstName: val('firstName'),
+        lastName: val('lastName'),
+        nicOrPassport: val('nicPassport'),
+        dateOfBirth: val('dob') || null,
+        bloodGroup: val('bloodGroup'),
+        gender: val('genderValue'),
+        phone: val('phone'),
+        email: val('newEmail'),
+        address: val('address'),
+        city: val('city'),
+        district: val('district'),
+        emergencyContact: val('emergencyContact'),
+        password: pwd
+      })
+        .then(showSignupSuccess)
+        .catch(err => {
+          alert(err.message);
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
+        });
+    });
+
+    function showSignupSuccess() {
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('signupSuccess').style.display = 'block';
+      document.getElementById('signinLink').style.display = 'none';
+
+      // Update visuals
+      for (let i = 1; i <= 3; i++) {
+        document.getElementById('ps' + i).className = 'prog-step done';
+        document.getElementById('ps' + i).querySelector('.prog-step-circle').innerHTML = '<i class="fa-solid fa-check"></i>';
+      }
+    }
+  </script>
+</body>
+</html>

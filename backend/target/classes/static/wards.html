@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ward Management — Medicare Hospital</title>
+  <meta name="description" content="Real-time ward and bed management system at Medicare Hospital — ICU, CCU, Surgical, Pediatric and Private wards.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .page-hero { background: linear-gradient(135deg, #0f172a 0%, #0369a1 70%, #0284c7 100%); padding: 4rem 0 3rem; position: relative; overflow: hidden; }
+    .page-hero::after { content:''; position:absolute; right:-100px; top:-100px; width:500px; height:500px; background:radial-gradient(circle,rgba(14,165,233,0.2) 0%,transparent 70%); }
+    .page-hero-content { position: relative; z-index: 1; }
+    .page-hero-tag { display:inline-block; background:rgba(56,189,248,0.2); color:var(--bright-cyan); padding:0.35rem 1rem; border-radius:var(--radius-full); font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1rem; border:1px solid rgba(56,189,248,0.3); }
+    .page-hero h1 { color:#fff; font-size:2.4rem; margin-bottom:0.5rem; }
+    .page-hero h1 span { color:var(--bright-cyan); }
+    .page-hero p { color:rgba(255,255,255,0.7); font-size:1rem; }
+
+    /* Live Indicator */
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(16,185,129,0.15);
+      color: #10b981;
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid rgba(16,185,129,0.3);
+      margin-top: 0.75rem;
+    }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    /* Stats Row */
+    .ward-stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 1rem;
+      padding: 1.75rem 0;
+    }
+
+    .ward-stat {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      padding: 1.25rem;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .ward-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    .ward-stat-num {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      font-family: var(--font-heading);
+    }
+
+    .ward-stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.4rem; }
+
+    /* Ward Tabs */
+    .ward-tabs {
+      display: flex;
+      gap: 0.6rem;
+      padding: 0.5rem 0 1.5rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .ward-tab-btn {
+      flex-shrink: 0;
+      padding: 0.65rem 1.25rem;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--border-medium);
+      background: var(--bg-surface);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ward-tab-btn.active { color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .ward-tab-btn:hover:not(.active) { border-color: var(--primary-blue); color: var(--primary-blue); }
+
+    /* Legend */
+    .bed-legend {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.75rem;
+      padding: 0.85rem 1.25rem;
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .legend-dot { width: 14px; height: 14px; border-radius: 4px; }
+
+    /* Ward Info Header */
+    .ward-info-header {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .ward-info-title { font-size: 1.25rem; font-weight: 700; color: var(--primary-navy); margin-bottom: 0.25rem; }
+    .ward-info-sub { font-size: 0.88rem; color: var(--text-muted); }
+
+    .ward-occupancy-bar {
+      width: 200px;
+    }
+
+    .occupancy-label { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .occupancy-bar { height: 8px; background: var(--border-light); border-radius: 99px; overflow: hidden; }
+    .occupancy-fill { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
+
+    /* Bed Grid */
+    .bed-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 3rem;
+    }
+
+    .bed-cell {
+      aspect-ratio: 1;
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 2px solid;
+      gap: 0.25rem;
+      position: relative;
+    }
+
+    .bed-cell i { font-size: 1.3rem; }
+
+    .bed-cell:hover { transform: scale(1.07); }
+
+    .bed-available {
+      background: rgba(16,185,129,0.08);
+      border-color: rgba(16,185,129,0.4);
+      color: #059669;
+    }
+
+    .bed-available:hover { background: rgba(16,185,129,0.18); }
+
+    .bed-occupied {
+      background: rgba(220,38,38,0.08);
+      border-color: rgba(220,38,38,0.4);
+      color: #dc2626;
+    }
+
+    .bed-occupied:hover { background: rgba(220,38,38,0.18); }
+
+    .bed-reserved {
+      background: rgba(245,158,11,0.08);
+      border-color: rgba(245,158,11,0.4);
+      color: #d97706;
+    }
+
+    .bed-maintenance {
+      background: rgba(100,116,139,0.08);
+      border-color: rgba(100,116,139,0.4);
+      color: #64748b;
+    }
+
+    /* Bed Detail Popup */
+    .bed-popup {
+      position: fixed;
+      z-index: 9000;
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-lg);
+      padding: 1.25rem;
+      width: 260px;
+      display: none;
+    }
+
+    .bed-popup.visible { display: block; }
+
+    .bed-popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .bed-popup-id { font-weight: 800; font-size: 1rem; color: var(--primary-navy); }
+    .bed-popup-close { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; }
+    .bed-popup-status { font-size: 0.82rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: var(--radius-full); margin-bottom: 0.75rem; }
+    .bed-popup-row { display: flex; justify-content: space-between; font-size: 0.83rem; padding: 0.35rem 0; border-bottom: 1px solid var(--border-light); color: var(--text-muted); }
+    .bed-popup-row:last-child { border: none; }
+    .bed-popup-row strong { color: var(--primary-navy); }
+    /* Ward & Bed Management (merged module) */
+    .wb-toolbar { display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem; }
+    .wb-search { flex:1; min-width:220px; position:relative; }
+    .wb-search i { position:absolute; left:0.9rem; top:50%; transform:translateY(-50%); color:var(--text-light); }
+    .wb-search input, .wb-select { width:100%; padding:0.75rem 1rem 0.75rem 2.4rem; border:1.5px solid var(--border-medium); border-radius:var(--radius-md); font-size:0.9rem; background:var(--bg-surface); }
+    .wb-select { width:auto; padding-left:1rem; }
+    .wb-ward-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:1.25rem; margin-bottom:3rem; }
+    .wb-ward-card { background:var(--bg-surface); border:1px solid var(--border-light); border-radius:var(--radius-lg); padding:1.25rem; box-shadow:var(--shadow-sm); }
+    .wb-ward-head { display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.9rem; }
+    .wb-ward-title { font-weight:800; color:var(--primary-navy); font-size:1.05rem; }
+    .wb-ward-actions, .wb-bed-actions { display:flex; gap:0.4rem; flex-wrap:wrap; }
+    .wb-counts { display:flex; gap:0.75rem; flex-wrap:wrap; font-size:0.78rem; font-weight:700; margin:0.6rem 0 0.9rem; }
+    .wb-bed-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:0.6rem; }
+    .wb-bed { border:1px solid var(--border-light); border-left:4px solid; border-radius:var(--radius-md); padding:0.6rem 0.7rem; background:var(--bg-main); font-size:0.82rem; }
+    .wb-bed-top { display:flex; justify-content:space-between; align-items:center; gap:0.3rem; flex-wrap:wrap; }
+    .wb-bed-top strong { white-space:nowrap; }
+    .wb-badge { font-size:0.68rem; font-weight:700; padding:2px 7px; border-radius:var(--radius-full); white-space:nowrap; }
+    .wb-bed-id { color:var(--text-muted); font-size:0.75rem; margin:0.2rem 0; }
+    .wb-bed-patient { color:var(--primary-navy); font-size:0.76rem; margin-bottom:0.3rem; }
+    .wb-link { background:none; border:1px solid var(--border-medium); border-radius:6px; padding:0.2rem 0.5rem; font-size:0.72rem; cursor:pointer; color:var(--primary-blue); }
+    .wb-link.wb-danger { color:#dc2626; border-color:#fca5a5; }
+    .wb-muted { color:var(--text-muted); font-size:0.8rem; }
+    .wb-empty { grid-column:1/-1; text-align:center; padding:2.5rem; color:var(--text-muted); background:var(--bg-surface); border-radius:var(--radius-lg); }
+    .wb-form label { display:block; font-size:0.85rem; font-weight:600; color:var(--primary-navy); margin:0.75rem 0 0.3rem; }
+    .wb-form input, .wb-form select { width:100%; padding:0.7rem 0.9rem; border:1.5px solid var(--border-medium); border-radius:var(--radius-md); font-size:0.9rem; box-sizing:border-box; }
+    .wb-form input[readonly] { background:var(--bg-main); color:var(--text-muted); }
+    .wb-form button[type=submit] { width:100%; justify-content:center; margin-top:1.25rem; }
+    @media (max-width: 600px) { .wb-ward-grid { grid-template-columns:1fr; } }
+  </style>
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item"><i class="fa-solid fa-phone-flip"></i><span>Channeling: <strong>0115 777 888</strong></span></div>
+        <div class="top-bar-info-item"><i class="fa-solid fa-truck-medical emergency-highlight"></i><span>Emergency: <strong class="emergency-highlight">0115 577 222</strong></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap"><i class="fa-solid fa-plus"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </a>
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="departments.html" class="nav-link">Departments</a>
+        <a href="doctors.html" class="nav-link">Find a Doctor</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
+        <a href="packages.html" class="nav-link">Packages</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <div class="page-hero-tag"><i class="fa-solid fa-bed-pulse"></i> Ward Management</div>
+      <h1>Ward &amp; <span>Bed Management</span></h1>
+      <p>Manage wards and beds: add, edit and remove them, and track which beds are available, occupied, reserved or under maintenance.</p>
+      <div class="live-badge"><span class="live-dot"></span> Live from the hospital database</div>
+    </div>
+  </section>
+
+  <div class="container">
+    <!-- Totals across all wards -->
+    <div class="ward-stats-row">
+      <div class="ward-stat"><div class="ward-stat-num" id="statWards" style="color:var(--primary-navy);">0</div><div class="ward-stat-label">Wards</div></div>
+      <div class="ward-stat"><div class="ward-stat-num" id="statTotal" style="color:var(--primary-blue);">0</div><div class="ward-stat-label">Total Beds</div></div>
+      <div class="ward-stat"><div class="ward-stat-num" id="statAvailable" style="color:#10b981;">0</div><div class="ward-stat-label">Available</div></div>
+      <div class="ward-stat"><div class="ward-stat-num" id="statOccupied" style="color:#dc2626;">0</div><div class="ward-stat-label">Occupied</div></div>
+      <div class="ward-stat"><div class="ward-stat-num" id="statReserved" style="color:#d97706;">0</div><div class="ward-stat-label">Reserved</div></div>
+      <div class="ward-stat"><div class="ward-stat-num" id="statMaintenance" style="color:#64748b;">0</div><div class="ward-stat-label">Maintenance</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="wb-toolbar">
+      <div class="wb-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchBox" placeholder="Search ward, bed or patient..." oninput="renderWards()">
+      </div>
+      <select id="statusFilter" class="wb-select" onchange="renderWards()">
+        <option value="">All bed statuses</option>
+        <option>Available</option><option>Occupied</option><option>Reserved</option><option>Maintenance</option>
+      </select>
+      <button class="btn btn-secondary" onclick="openWardModal(null)" data-roles="admin"><i class="fa-solid fa-hospital"></i> Add Ward</button>
+      <button class="btn btn-primary" onclick="openBedModal(null)" data-roles="staff admin"><i class="fa-solid fa-bed"></i> Add Bed</button>
+    </div>
+
+    <!-- Legend -->
+    <div class="bed-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Available</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#dc2626;"></div> Occupied</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Reserved</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#94a3b8;"></div> Maintenance</div>
+    </div>
+
+    <!-- Ward cards (one per ward, with its beds) -->
+    <div id="wardContainer" class="wb-ward-grid"></div>
+  </div>
+
+  <!-- Add / Edit Ward -->
+  <div class="appt-modal-overlay" id="wardModal">
+    <div class="appt-modal-box" style="max-width:460px;">
+      <div class="appt-modal-header">
+        <h3 id="wardModalTitle"><i class="fa-solid fa-hospital"></i> Add Ward</h3>
+        <button class="appt-modal-close" onclick="closeModal('wardModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="appt-modal-body">
+        <form id="wardForm" class="wb-form" onsubmit="saveWard(event)">
+          <input type="hidden" id="wardEditing">
+          <label>Ward ID *</label>
+          <input type="text" id="wardId" required maxlength="30" pattern="[^ ]+" title="No spaces, e.g. WD-ICU" placeholder="e.g. WD-ICU">
+          <label>Ward Number *</label>
+          <input type="number" id="wardNumber" required min="1" placeholder="e.g. 5">
+          <label>Ward Type *</label>
+          <input type="text" id="wardType" required placeholder="e.g. ICU, General Ward, Pediatric">
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Ward</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit Bed -->
+  <div class="appt-modal-overlay" id="bedModal">
+    <div class="appt-modal-box" style="max-width:460px;">
+      <div class="appt-modal-header">
+        <h3 id="bedModalTitle"><i class="fa-solid fa-bed"></i> Add Bed</h3>
+        <button class="appt-modal-close" onclick="closeModal('bedModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="appt-modal-body">
+        <form id="bedForm" class="wb-form" onsubmit="saveBed(event)">
+          <input type="hidden" id="bedEditing">
+          <label>Bed ID *</label>
+          <input type="text" id="bedId" required maxlength="30" pattern="[^ ]+" title="No spaces, e.g. ICU-B07" placeholder="e.g. ICU-B07">
+          <label>Bed Number *</label>
+          <input type="number" id="bedNumber" required min="1" placeholder="e.g. 7">
+          <label>Ward *</label>
+          <select id="bedWard" required></select>
+          <label>Status *</label>
+          <select id="bedStatus" required onchange="togglePatientField()">
+            <option>Available</option><option>Occupied</option><option>Reserved</option><option>Maintenance</option>
+          </select>
+          <div id="patientField">
+            <label>Patient Name</label>
+            <input type="text" id="bedPatient" placeholder="Who is in / booked for this bed">
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Bed</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 Medicare Hospital Management System. All Rights Reserved.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/api.js?v=20261004-2"></script>
+  <script>
+    // Ward & Bed Management — data from /api/wards and /api/beds (WardController.java, BedController.java)
+    let wards = [];
+    let beds = [];
+
+    const STATUS_COLORS = { Available: '#10b981', Occupied: '#dc2626', Reserved: '#f59e0b', Maintenance: '#94a3b8' };
+
+    async function loadWards() {
+      try {
+        [wards, beds] = await Promise.all([api('/wards'), api('/beds')]);
+        updateTotals();
+        fillSelect(document.getElementById('bedWard'), wards, w => w.wardId, w => `${w.wardId} - ${w.wardType}`, '-- Select ward --');
+        renderWards();
+      } catch (err) {
+        document.getElementById('wardContainer').innerHTML =
+          `<div class="wb-empty" style="color:#dc2626;"><i class="fa-solid fa-circle-exclamation"></i> ${esc(err.message)}</div>`;
+      }
+    }
+
+    function count(list, status) {
+      return list.filter(b => b.status === status).length;
+    }
+
+    function updateTotals() {
+      document.getElementById('statWards').textContent = wards.length;
+      document.getElementById('statTotal').textContent = beds.length;
+      for (const s of ['Available', 'Occupied', 'Reserved', 'Maintenance']) {
+        document.getElementById('stat' + s).textContent = count(beds, s);
+      }
+    }
+
+    // One card per ward, with its beds; the search box and status filter narrow what is shown
+    function renderWards() {
+      const query = document.getElementById('searchBox').value.trim().toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const container = document.getElementById('wardContainer');
+
+      if (!wards.length) {
+        container.innerHTML = '<div class="wb-empty">No wards yet. Click "Add Ward" to create the first one.</div>';
+        return;
+      }
+
+      const cards = wards.map(ward => {
+        const wardBeds = beds.filter(b => b.wardId === ward.wardId).sort((a, b) => a.bedNumber - b.bedNumber);
+        const wardMatches = `${ward.wardId} ${ward.wardNumber} ${ward.wardType}`.toLowerCase().includes(query);
+        const shownBeds = wardBeds.filter(b =>
+          (!statusFilter || b.status === statusFilter) &&
+          (wardMatches || `${b.bedId} ${b.bedNumber} ${b.patientName || ''}`.toLowerCase().includes(query)));
+        if ((query || statusFilter) && !shownBeds.length && !(wardMatches && !statusFilter)) return '';
+
+        const total = wardBeds.length;
+        const occupied = count(wardBeds, 'Occupied');
+        const pct = total ? Math.round(occupied / total * 100) : 0;
+        const barColor = pct >= 85 ? '#dc2626' : pct >= 60 ? '#f59e0b' : '#10b981';
+
+        const bedTiles = shownBeds.length ? shownBeds.map(b => `
+          <div class="wb-bed" style="border-left-color:${STATUS_COLORS[b.status]};">
+            <div class="wb-bed-top">
+              <strong><i class="fa-solid fa-bed"></i> Bed ${b.bedNumber}</strong>
+              <span class="wb-badge" style="background:${STATUS_COLORS[b.status]}1a;color:${STATUS_COLORS[b.status]};">${esc(b.status)}</span>
+            </div>
+            <div class="wb-bed-id">${esc(b.bedId)}</div>
+            ${b.patientName ? `<div class="wb-bed-patient"><i class="fa-solid fa-user"></i> ${esc(b.patientName)}</div>` : ''}
+            <div class="wb-bed-actions" data-roles="staff admin">
+              <button class="wb-link" onclick="openBedModal('${esc(b.bedId)}')"><i class="fa-solid fa-pen"></i> Edit</button>
+              <button class="wb-link wb-danger" onclick="deleteBed('${esc(b.bedId)}')"><i class="fa-solid fa-trash"></i> Delete</button>
+            </div>
+          </div>`).join('') : '<p class="wb-muted">No beds in this ward' + (statusFilter ? ' with this status' : '') + '.</p>';
+
+        return `
+          <div class="wb-ward-card">
+            <div class="wb-ward-head">
+              <div>
+                <div class="wb-ward-title">Ward ${ward.wardNumber} — ${esc(ward.wardType)}</div>
+                <div class="wb-muted">ID: ${esc(ward.wardId)}</div>
+              </div>
+              <div class="wb-ward-actions" data-roles="admin">
+                <button class="wb-link" onclick="openWardModal('${esc(ward.wardId)}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button class="wb-link wb-danger" onclick="deleteWard('${esc(ward.wardId)}')"><i class="fa-solid fa-trash"></i> Delete</button>
+              </div>
+            </div>
+            <div class="occupancy-label"><span>Occupancy</span><span>${occupied} of ${total} beds (${pct}%)</span></div>
+            <div class="occupancy-bar"><div class="occupancy-fill" style="width:${pct}%;background:${barColor};"></div></div>
+            <div class="wb-counts">
+              <span style="color:#10b981;">${count(wardBeds, 'Available')} available</span>
+              <span style="color:#dc2626;">${occupied} occupied</span>
+              <span style="color:#d97706;">${count(wardBeds, 'Reserved')} reserved</span>
+              <span style="color:#64748b;">${count(wardBeds, 'Maintenance')} maintenance</span>
+            </div>
+            <div class="wb-bed-grid">${bedTiles}</div>
+          </div>`;
+      }).join('');
+
+      container.innerHTML = cards || '<div class="wb-empty">No wards or beds match your search.</div>';
+    }
+
+    // ---------- Wards ----------
+    function openWardModal(wardId) {
+      const w = wardId ? wards.find(x => x.wardId === wardId) : null;
+      document.getElementById('wardForm').reset();
+      document.getElementById('wardEditing').value = w ? w.wardId : '';
+      document.getElementById('wardId').value = w ? w.wardId : '';
+      document.getElementById('wardId').readOnly = !!w;   // the ID cannot change after creation
+      document.getElementById('wardNumber').value = w ? w.wardNumber : '';
+      document.getElementById('wardType').value = w ? w.wardType : '';
+      document.getElementById('wardModalTitle').innerHTML = w
+        ? `<i class="fa-solid fa-pen"></i> Edit Ward ${esc(w.wardId)}` : '<i class="fa-solid fa-hospital"></i> Add Ward';
+      document.getElementById('wardModal').classList.add('active');
+    }
+
+    async function saveWard(e) {
+      e.preventDefault();
+      const editing = document.getElementById('wardEditing').value;
+      const ward = {
+        wardId: document.getElementById('wardId').value.trim(),
+        wardNumber: parseInt(document.getElementById('wardNumber').value),
+        wardType: document.getElementById('wardType').value.trim()
+      };
+      try {
+        editing ? await api(`/wards/${encodeURIComponent(editing)}`, 'PUT', ward) : await api('/wards', 'POST', ward);
+        closeModal('wardModal');
+        await loadWards();
+        alert(`✅ Ward ${ward.wardId} ${editing ? 'updated' : 'added'}.`);
+      } catch (err) {
+        alert('❌ Could not save ward:\n' + err.message);
+      }
+    }
+
+    async function deleteWard(wardId) {
+      if (!confirm(`Delete ward ${wardId}?`)) return;
+      try {
+        await api(`/wards/${encodeURIComponent(wardId)}`, 'DELETE');
+        await loadWards();
+      } catch (err) {
+        alert('❌ ' + err.message);   // e.g. the ward still has beds
+      }
+    }
+
+    // ---------- Beds ----------
+    function togglePatientField() {
+      const status = document.getElementById('bedStatus').value;
+      document.getElementById('patientField').style.display = (status === 'Occupied' || status === 'Reserved') ? 'block' : 'none';
+    }
+
+    function openBedModal(bedId) {
+      if (!wards.length) { alert('Please add a ward first.'); return; }
+      const b = bedId ? beds.find(x => x.bedId === bedId) : null;
+      document.getElementById('bedForm').reset();
+      document.getElementById('bedEditing').value = b ? b.bedId : '';
+      document.getElementById('bedId').value = b ? b.bedId : '';
+      document.getElementById('bedId').readOnly = !!b;
+      document.getElementById('bedNumber').value = b ? b.bedNumber : '';
+      document.getElementById('bedWard').value = b ? b.wardId : '';
+      document.getElementById('bedStatus').value = b ? b.status : 'Available';
+      document.getElementById('bedPatient').value = b && b.patientName ? b.patientName : '';
+      togglePatientField();
+      document.getElementById('bedModalTitle').innerHTML = b
+        ? `<i class="fa-solid fa-pen"></i> Edit Bed ${esc(b.bedId)}` : '<i class="fa-solid fa-bed"></i> Add Bed';
+      document.getElementById('bedModal').classList.add('active');
+    }
+
+    async function saveBed(e) {
+      e.preventDefault();
+      const editing = document.getElementById('bedEditing').value;
+      const bed = {
+        bedId: document.getElementById('bedId').value.trim(),
+        bedNumber: parseInt(document.getElementById('bedNumber').value),
+        wardId: document.getElementById('bedWard').value,
+        status: document.getElementById('bedStatus').value,
+        patientName: document.getElementById('bedPatient').value.trim() || null
+      };
+      try {
+        editing ? await api(`/beds/${encodeURIComponent(editing)}`, 'PUT', bed) : await api('/beds', 'POST', bed);
+        closeModal('bedModal');
+        await loadWards();
+        alert(`✅ Bed ${bed.bedId} ${editing ? 'updated' : 'added'}.`);
+      } catch (err) {
+        alert('❌ Could not save bed:\n' + err.message);
+      }
+    }
+
+    async function deleteBed(bedId) {
+      if (!confirm(`Delete bed ${bedId}?`)) return;
+      try {
+        await api(`/beds/${encodeURIComponent(bedId)}`, 'DELETE');
+        await loadWards();
+      } catch (err) {
+        alert('❌ ' + err.message);   // e.g. the bed is occupied
+      }
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    document.getElementById('mobileToggle').addEventListener('click', () => document.getElementById('navMenu').classList.toggle('active'));
+
+    loadWards();
+  </script>
+</body>
+</html>

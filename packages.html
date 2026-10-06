@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Packages — Medicare Hospital</title>
+  <meta name="description" content="Medicare Hospital wellness health packages — executive checkups, cardiac shields, senior care, women's health, and more. Book online today.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .page-hero { background: linear-gradient(135deg, #0f172a 0%, #1e40af 60%, #0284c7 100%); padding: 5rem 0 3.5rem; position: relative; overflow: hidden; }
+    .page-hero::after { content:''; position:absolute; right:-150px; top:-150px; width:700px; height:700px; background:radial-gradient(circle,rgba(56,189,248,0.1) 0%,transparent 70%); }
+    .page-hero-content { position: relative; z-index: 1; text-align: center; }
+    .page-hero-tag { display:inline-block; background:rgba(56,189,248,0.15); color:var(--bright-cyan); padding:0.35rem 1rem; border-radius:var(--radius-full); font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1rem; border:1px solid rgba(56,189,248,0.3); }
+    .page-hero h1 { color:#fff; font-size:2.8rem; margin-bottom:0.75rem; }
+    .page-hero h1 span { color:var(--bright-cyan); }
+    .page-hero p { color:rgba(255,255,255,0.75); font-size:1.05rem; max-width:600px; margin:0 auto; }
+
+    /* Filter Tabs */
+    .pkg-filter-row { display: flex; justify-content: center; gap: 0.6rem; flex-wrap: wrap; padding: 2.5rem 0 2rem; }
+    .pkg-tab { padding: 0.6rem 1.4rem; border-radius: var(--radius-full); border: 1.5px solid var(--border-medium); background: var(--bg-surface); cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); transition: var(--transition); }
+    .pkg-tab.active { background: var(--primary-blue); border-color: var(--primary-blue); color: #fff; box-shadow: 0 4px 12px rgba(30,64,175,0.25); }
+    .pkg-tab:hover:not(.active) { border-color: var(--primary-blue); color: var(--primary-blue); }
+
+    /* Packages Grid */
+    .packages-full-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; padding-bottom: 4rem; }
+
+    .pkg-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: var(--transition);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pkg-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: rgba(30,64,175,0.2); }
+
+    .pkg-card.featured { border-color: var(--primary-blue); box-shadow: 0 0 0 2px rgba(30,64,175,0.2), var(--shadow-md); }
+
+    .pkg-popular-tag {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+      color: #fff;
+      padding: 0.3rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .pkg-card-top {
+      padding: 2rem 1.75rem 1.5rem;
+    }
+
+    .pkg-icon { width: 56px; height: 56px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #fff; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+    .pkg-name { font-size: 1.1rem; font-weight: 800; color: var(--primary-navy); margin-bottom: 0.25rem; }
+
+    .pkg-tagline { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+    .pkg-price-block { margin-bottom: 1.25rem; }
+    .pkg-price { font-size: 2rem; font-weight: 900; color: var(--primary-navy); font-family: var(--font-heading); line-height: 1; }
+    .pkg-price span { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+    .pkg-original-price { font-size: 0.85rem; color: var(--text-light); text-decoration: line-through; margin-top: 0.15rem; }
+    .pkg-saving-badge { display: inline-block; background: rgba(16,185,129,0.1); color: #059669; font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: var(--radius-full); margin-left: 0.5rem; }
+
+    .pkg-target { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 1.1rem; }
+    .pkg-target i { color: var(--primary-blue); }
+
+    .pkg-features-list { display: flex; flex-direction: column; gap: 0.45rem; }
+    .pkg-feature { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.85rem; color: var(--text-dark); line-height: 1.4; }
+    .pkg-feature i { color: var(--success-green); margin-top: 2px; font-size: 0.75rem; flex-shrink: 0; }
+
+    .pkg-card-bottom {
+      margin-top: auto;
+      padding: 1.25rem 1.75rem;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .pkg-duration {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .pkg-duration i { color: var(--primary-blue); }
+
+    .btn-book-pkg {
+      padding: 0.65rem 1.4rem;
+      background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 12px rgba(30,64,175,0.25);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-book-pkg:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(30,64,175,0.4); }
+
+    /* Comparison Banner */
+    .comparison-cta {
+      background: linear-gradient(135deg, var(--primary-navy), #1e3a6e);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .comparison-cta h2 { color: #fff; font-size: 1.5rem; margin-bottom: 0.35rem; }
+    .comparison-cta p { color: rgba(255,255,255,0.7); font-size: 0.9rem; max-width: 550px; }
+
+    /* Booking Modal */
+    .pkg-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: var(--transition); }
+    .pkg-modal-overlay.active { opacity: 1; visibility: visible; }
+    .pkg-modal-box { background: var(--bg-surface); border-radius: var(--radius-lg); width: 100%; max-width: 500px; margin: 1rem; overflow: hidden; box-shadow: var(--shadow-lg); transform: translateY(20px); transition: var(--transition); }
+    .pkg-modal-overlay.active .pkg-modal-box { transform: translateY(0); }
+    .pkg-modal-header { background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan)); padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+    .pkg-modal-header h3 { font-size: 1.05rem; }
+    .pkg-modal-close { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+    .pkg-modal-close:hover { background: rgba(255,255,255,0.35); }
+    .pkg-modal-body { padding: 1.75rem; }
+    .selected-pkg-info { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-subtle); border-radius: var(--radius-md); margin-bottom: 1.25rem; }
+    .selected-pkg-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #fff; flex-shrink: 0; }
+    .pkg-book-form .form-group { margin-bottom: 1rem; }
+    .pkg-book-form label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-navy); margin-bottom: 0.4rem; }
+    .pkg-book-form input, .pkg-book-form select { width: 100%; padding: 0.8rem 1rem; border: 1.5px solid var(--border-medium); border-radius: var(--radius-md); background: var(--bg-main); font-size: 0.9rem; color: var(--text-dark); }
+    .pkg-book-form input:focus, .pkg-book-form select:focus { outline: none; border-color: var(--primary-blue); }
+
+    @media (max-width: 1024px) { .packages-full-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .packages-full-grid { grid-template-columns: 1fr; } }
+  </style>
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item"><i class="fa-solid fa-phone-flip"></i><span>Channeling: <strong>0115 777 888</strong></span></div>
+        <div class="top-bar-info-item"><i class="fa-solid fa-truck-medical emergency-highlight"></i><span>Emergency: <strong class="emergency-highlight">0115 577 222</strong></span></div>
+      </div>
+      <div class="top-bar-actions">
+        <a href="login.html" class="portal-link"><i class="fa-solid fa-user-lock"></i> Patient Portal</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap"><i class="fa-solid fa-plus"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </a>
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="departments.html" class="nav-link">Departments</a>
+        <a href="doctors.html" class="nav-link">Find a Doctor</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
+        <a href="packages.html" class="nav-link active">Packages</a>
+        <a href="index.html#contact" class="nav-link">Contact</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <div class="page-hero-tag"><i class="fa-solid fa-shield-heart"></i> Preventive Healthcare</div>
+      <h1>Wellness Health <span>Packages</span></h1>
+      <p>Comprehensive screening programs designed for early detection and lifelong health maintenance — for every stage of life.</p>
+    </div>
+  </section>
+
+  <div class="container">
+    <!-- Filter Tabs -->
+    <div class="pkg-filter-row">
+      <div class="pkg-tab active" onclick="filterPkgs(this, 'all')">All Packages</div>
+      <div class="pkg-tab" onclick="filterPkgs(this, 'basic')">Basic</div>
+      <div class="pkg-tab" onclick="filterPkgs(this, 'advanced')">Advanced</div>
+      <div class="pkg-tab" onclick="filterPkgs(this, 'cardiac')">Cardiac</div>
+      <div class="pkg-tab" onclick="filterPkgs(this, 'cancer')">Cancer Screening</div>
+      <div class="pkg-tab" onclick="filterPkgs(this, 'senior')">Senior Care</div>
+      <div class="pkg-tab" onclick="filterPkgs(this, 'women')">Women's Health</div>
+      <div class="pkg-tab" onclick="filterPkgs(this, 'corporate')">Corporate</div>
+    </div>
+
+    <!-- Packages Grid -->
+    <div class="packages-full-grid" id="packagesGrid"></div>
+
+    <!-- Comparison CTA -->
+    <div class="comparison-cta">
+      <div>
+        <h2>Not sure which package is right for you?</h2>
+        <p>Our health advisors can guide you to the best screening package based on your age, family history, and lifestyle. Book a free consultation today.</p>
+      </div>
+      <a href="appointments.html" class="btn btn-primary" style="white-space:nowrap;">
+        <i class="fa-solid fa-user-doctor"></i> Free Consultation
+      </a>
+    </div>
+  </div>
+
+  <!-- Booking Modal -->
+  <div class="pkg-modal-overlay" id="pkgModal">
+    <div class="pkg-modal-box">
+      <div class="pkg-modal-header">
+        <h3><i class="fa-solid fa-calendar-plus"></i> Book Health Package</h3>
+        <button class="pkg-modal-close" onclick="closePkgModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="pkg-modal-body">
+        <div class="selected-pkg-info" id="selectedPkgInfo"></div>
+        <form class="pkg-book-form" onsubmit="submitPkgBooking(event)">
+          <div class="form-group">
+            <label>Patient Name</label>
+            <input type="text" placeholder="Full name" required>
+          </div>
+          <div class="form-group">
+            <label>Contact Number</label>
+            <input type="tel" pattern="(?:0|\+94(?: |-)?)[0-9]{2}(?: |-)?[0-9]{3}(?: |-)?[0-9]{4}" title="Sri Lankan number, e.g. 0771234567 or +94 77 123 4567" placeholder="+94 7X XXX XXXX" required>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>Preferred Date</label>
+            <input type="date" required>
+          </div>
+          <div class="form-group">
+            <label>Preferred Time Slot</label>
+            <select required>
+              <option value="">-- Select Slot --</option>
+              <option>7:00 AM – 10:00 AM (Fasting Required)</option>
+              <option>10:00 AM – 1:00 PM</option>
+              <option>2:00 PM – 5:00 PM</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">
+            <i class="fa-solid fa-circle-check"></i> Confirm Booking
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer" id="contact">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 Medicare Hospital Management System. All Rights Reserved.</div>
+        <div style="display:flex;gap:1.5rem;">
+          <a href="index.html" style="color:rgba(255,255,255,0.6);">Home</a>
+          <a href="doctors.html" style="color:rgba(255,255,255,0.6);">Find a Doctor</a>
+          <a href="login.html" style="color:rgba(255,255,255,0.6);">Login</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const packages = [
+      { id:1, name:'Basic Health Screen', tagline:'Essential health parameters for all adults', category:'basic', icon:'fa-stethoscope', color:'linear-gradient(135deg,#0284c7,#0369a1)', price:8500, originalPrice:11000, saving:'23%', duration:'Half Day (4 hrs)', target:'Adults 25+', popular:false, features:['Complete Blood Count (CBC)','Blood Sugar (Fasting & PP)','Lipid Profile','Urine Full Report','BMI & Blood Pressure Check','Physician Consultation'] },
+      { id:2, name:'Executive Checkup', tagline:'Comprehensive annual health assessment', category:'advanced', icon:'fa-briefcase-medical', color:'linear-gradient(135deg,#1e40af,#1e3a8a)', price:18500, originalPrice:24000, saving:'23%', duration:'Full Day (8 hrs)', target:'Adults 35+', popular:false, features:['All Basic Screen Tests','Liver & Kidney Function','Thyroid Profile (T3, T4, TSH)','Resting ECG','Chest X-Ray (PA View)','Abdominal Ultrasound Scan','Consultant Physician Review'] },
+      { id:3, name:'Cardiac Shield Package', tagline:'Advanced cardiac screening for heart disease risk', category:'cardiac', icon:'fa-heart-pulse', color:'linear-gradient(135deg,#dc2626,#b91c1c)', price:28000, originalPrice:38000, saving:'26%', duration:'Full Day', target:'Adults 40+', popular:true, features:['All Executive Tests','2D Echocardiogram','Exercise Treadmill Test (ETT)','Cardiac Enzyme Panel','Holter Monitor (24 hr)','Cardiac Specialist Review','Detailed Risk Assessment Report'] },
+      { id:4, name:'Comprehensive Cancer Screen', tagline:'Multi-organ cancer detection panel', category:'cancer', icon:'fa-ribbon', color:'linear-gradient(135deg,#059669,#047857)', price:35000, originalPrice:48000, saving:'27%', duration:'Full Day + Results', target:'Adults 45+', popular:false, features:['PSA (Prostate Specific Antigen)','CA-125 (Ovarian Marker)','CEA (Colon Cancer Marker)','AFP (Liver Cancer Marker)','CA 19-9 (Pancreatic)','Low-Dose CT Chest Scan','Oncology Specialist Review'] },
+      { id:5, name:'Senior Citizen Care', tagline:'Tailored for 60+ health monitoring needs', category:'senior', icon:'fa-person-cane', color:'linear-gradient(135deg,#7c3aed,#5b21b6)', price:22500, originalPrice:30000, saving:'25%', duration:'Full Day', target:'Adults 60+', popular:false, features:['Comprehensive Blood Panel','Bone Mineral Density (DEXA)','Vision & Hearing Assessment','Cognitive Function Screening','Geriatric Specialist Consultation','Fall Risk Assessment','Nutrition & Diet Counselling'] },
+      { id:6, name:"Women's Wellness Package", tagline:'Complete women\'s health screening', category:'women', icon:'fa-venus', color:'linear-gradient(135deg,#ec4899,#be185d)', price:24500, originalPrice:32000, saving:'23%', duration:'Full Day', target:'Women 30+', popular:true, features:['Mammography (Breast Scan)','Pap Smear (Cervical Screen)','Pelvic Ultrasound Scan','Hormonal Panel (Estrogen, FSH, LH)','Bone Density Assessment','Gynecologist Consultation','Thyroid & Anemia Panel'] },
+      { id:7, name:'Corporate Health Package', tagline:'Annual employee health assessment', category:'corporate', icon:'fa-building', color:'linear-gradient(135deg,#475569,#334155)', price:14000, originalPrice:19000, saving:'26%', duration:'Half Day', target:'Working Adults', popular:false, features:['Blood Pressure & BMI','Blood Sugar & Cholesterol','Vision Test','Hearing Assessment','Resting ECG','Stress Assessment','Medical Certificate Included'] },
+      { id:8, name:'Pediatric Wellness Check', tagline:'Complete health evaluation for children', category:'basic', icon:'fa-baby', color:'linear-gradient(135deg,#d97706,#b45309)', price:9500, originalPrice:13000, saving:'27%', duration:'Half Day', target:'Children 2–15 yrs', popular:false, features:['Growth & Development Assessment','Blood Count & Iron Studies','Vitamin D & B12 Levels','Vision & Hearing Screen','Immunization Review','Pediatrician Consultation','Nutrition Guidance'] },
+      { id:9, name:'Diabetes Management Pack', tagline:'Comprehensive diabetes monitoring & care', category:'advanced', icon:'fa-syringe', color:'linear-gradient(135deg,#0d9488,#0f766e)', price:16500, originalPrice:22000, saving:'25%', duration:'Half Day', target:'Diabetic Patients', popular:false, features:['HbA1c (3-Month Sugar Control)','Fasting & PP Blood Sugar','Complete Kidney Function Panel','Diabetic Retinopathy Eye Scan','Foot Peripheral Vascular Check','Endocrinologist Consultation','Dietitian Counselling'] },
+    ];
+
+    let selectedPkg = null;
+
+    function renderPackages(list) {
+      const grid = document.getElementById('packagesGrid');
+      if (!list.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);">No packages found.</div>';
+        return;
+      }
+      grid.innerHTML = list.map(p => `
+        <div class="pkg-card ${p.popular ? 'featured' : ''}">
+          ${p.popular ? '<div class="pkg-popular-tag"><i class="fa-solid fa-star"></i> Most Popular</div>' : ''}
+          <div class="pkg-card-top">
+            <div class="pkg-icon" style="background:${p.color};"><i class="fa-solid ${p.icon}"></i></div>
+            <div class="pkg-name">${p.name}</div>
+            <div class="pkg-tagline">${p.tagline}</div>
+            <div class="pkg-price-block">
+              <div class="pkg-price">LKR ${p.price.toLocaleString()} <span>/ person</span>
+                <span class="pkg-saving-badge">Save ${p.saving}</span>
+              </div>
+              <div class="pkg-original-price">Was LKR ${p.originalPrice.toLocaleString()}</div>
+            </div>
+            <div class="pkg-target"><i class="fa-solid fa-users"></i> Recommended for: ${p.target}</div>
+            <div class="pkg-features-list">
+              ${p.features.map(f => `<div class="pkg-feature"><i class="fa-solid fa-circle-check"></i> ${f}</div>`).join('')}
+            </div>
+          </div>
+          <div class="pkg-card-bottom">
+            <div class="pkg-duration"><i class="fa-regular fa-clock"></i> ${p.duration}</div>
+            <button class="btn-book-pkg" onclick="openPkgModal(${p.id})">
+              <i class="fa-solid fa-calendar-plus"></i> Book Now
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterPkgs(el, cat) {
+      document.querySelectorAll('.pkg-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      const filtered = cat === 'all' ? packages : packages.filter(p => p.category === cat);
+      renderPackages(filtered);
+    }
+
+    function openPkgModal(id) {
+      selectedPkg = packages.find(p => p.id === id);
+      if (!selectedPkg) return;
+      document.getElementById('selectedPkgInfo').innerHTML = `
+        <div class="selected-pkg-icon" style="background:${selectedPkg.color};"><i class="fa-solid ${selectedPkg.icon}"></i></div>
+        <div>
+          <div style="font-weight:700;color:var(--primary-navy);">${selectedPkg.name}</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);">${selectedPkg.tagline}</div>
+          <div style="font-size:1rem;font-weight:800;color:var(--primary-blue);margin-top:0.25rem;">LKR ${selectedPkg.price.toLocaleString()}</div>
+        </div>
+      `;
+      const today = new Date();
+      document.querySelector('.pkg-book-form input[type="date"]').min = today.toISOString().split('T')[0];
+      document.getElementById('pkgModal').classList.add('active');
+    }
+
+    function closePkgModal() { document.getElementById('pkgModal').classList.remove('active'); }
+
+    document.getElementById('pkgModal').addEventListener('click', function(e) { if (e.target === this) closePkgModal(); });
+
+    function submitPkgBooking(e) {
+      e.preventDefault();
+      closePkgModal();
+      const ref = 'PKG-' + Math.floor(Math.random() * 90000 + 10000);
+      alert(`✅ Health Package Booked!\n${selectedPkg.name}\nReference: ${ref}\n\nWe will send your appointment confirmation via SMS and Email.`);
+    }
+
+    document.getElementById('mobileToggle').addEventListener('click', () => document.getElementById('navMenu').classList.toggle('active'));
+
+    renderPackages(packages);
+  </script>
+</body>
+</html>

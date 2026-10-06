@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find a Doctor — Medicare Hospital</title>
+  <meta name="description" content="Browse and channel specialist doctors at Medicare Hospital Sri Lanka. Filter by specialty, availability, and consultation fee.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .page-hero {
+      background: linear-gradient(135deg, var(--primary-navy) 0%, #1e3a6e 60%, #0284c7 100%);
+      padding: 5rem 0 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-hero::after {
+      content: '';
+      position: absolute;
+      right: -150px;
+      top: -150px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%);
+    }
+    .page-hero-content { position: relative; z-index: 1; }
+    .page-hero-tag {
+      display: inline-block;
+      background: rgba(56,189,248,0.15);
+      color: var(--bright-cyan);
+      padding: 0.35rem 1rem;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(56,189,248,0.3);
+    }
+    .page-hero h1 { color: #fff; font-size: 2.6rem; margin-bottom: 0.75rem; }
+    .page-hero h1 span { color: var(--bright-cyan); }
+    .page-hero p { color: rgba(255,255,255,0.7); font-size: 1.05rem; max-width: 600px; }
+
+    /* Page Layout */
+    .doctors-page-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+      padding: 2.5rem 0 4rem;
+    }
+
+    /* Sidebar Filter */
+    .filter-sidebar {
+      position: sticky;
+      top: 100px;
+      height: fit-content;
+    }
+
+    .filter-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .filter-card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-card-header h3 {
+      font-size: 1rem;
+      color: var(--primary-navy);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-clear {
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .filter-section {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .filter-section:last-child { border-bottom: none; }
+
+    .filter-section-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.85rem;
+    }
+
+    .filter-check-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.65rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      font-weight: 500;
+    }
+
+    .filter-check-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary-blue);
+      flex-shrink: 0;
+    }
+
+    .filter-check-item .count {
+      margin-left: auto;
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      padding: 0.1rem 0.5rem;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .fee-range-display {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .fee-range-display strong { color: var(--primary-navy); }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary-blue);
+    }
+
+    /* Availability Toggle */
+    .availability-toggle {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .avail-chip {
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1.5px solid var(--border-medium);
+      background: var(--bg-surface);
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .avail-chip.active {
+      background: rgba(30, 64, 175, 0.08);
+      border-color: var(--primary-blue);
+      color: var(--primary-blue);
+    }
+
+    /* Main Doctor Section */
+    .doctors-main {}
+
+    .search-bar-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-input-wrap i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      padding: 0.85rem 1rem 0.85rem 2.75rem;
+      border: 1.5px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      transition: var(--transition);
+    }
+
+    .search-input-wrap input:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+
+    .results-info {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .results-info strong { color: var(--primary-navy); }
+
+    /* Doctor Cards Grid */
+    .doctors-grid-full {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .doc-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .doc-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(30, 64, 175, 0.2);
+    }
+
+    .doc-card-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .doc-card-dept-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--bright-cyan);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.3rem 0.75rem;
+      border-radius: var(--radius-full);
+      backdrop-filter: blur(6px);
+    }
+
+    .doc-card-avail-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.3rem 0.75rem;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .doc-card-avail-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .avail-today {
+      background: rgba(16, 185, 129, 0.15);
+      color: #059669;
+      backdrop-filter: blur(6px);
+    }
+
+    .avail-today::before { background: #10b981; }
+
+    .avail-tomorrow {
+      background: rgba(245, 158, 11, 0.15);
+      color: #d97706;
+      backdrop-filter: blur(6px);
+    }
+
+    .avail-tomorrow::before { background: #f59e0b; }
+
+    .doc-card-body { padding: 1.25rem; }
+
+    .doc-name {
+      font-size: 1.05rem;
+      color: var(--primary-navy);
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .doc-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .doc-qual {
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .doc-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .doc-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.83rem;
+      color: var(--text-muted);
+    }
+
+    .doc-meta-item i { width: 14px; color: var(--primary-blue); text-align: center; }
+
+    .doc-schedule-chips {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .day-chip {
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(30, 64, 175, 0.08);
+      color: var(--primary-blue);
+    }
+
+    .doc-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-subtle);
+    }
+
+    .doc-fee {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--primary-navy);
+    }
+
+    .doc-fee span {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .btn-channel {
+      padding: 0.6rem 1.25rem;
+      background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+    }
+
+    .btn-channel:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(30, 64, 175, 0.4); }
+
+    /* No results */
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+
+    .no-results i { font-size: 3rem; margin-bottom: 1rem; color: var(--border-medium); }
+
+
+    .selected-doc-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 1.25rem;
+    }
+
+    .selected-doc-info img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .appt-form .form-group { margin-bottom: 1.1rem; }
+
+    .appt-form label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-navy);
+      margin-bottom: 0.4rem;
+    }
+
+    .appt-form input, .appt-form select, .appt-form textarea {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 1.5px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-main);
+      font-size: 0.9rem;
+      color: var(--text-dark);
+    }
+
+    .appt-form input:focus, .appt-form select:focus, .appt-form textarea:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+    }
+
+    @media (max-width: 1024px) {
+      .doctors-page-layout { grid-template-columns: 1fr; }
+      .filter-sidebar { position: static; }
+    }
+  </style>
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item"><i class="fa-solid fa-phone-flip"></i><span>24/7 Channeling: <strong>0115 777 888</strong></span></div>
+        <div class="top-bar-info-item"><i class="fa-solid fa-truck-medical emergency-highlight"></i><span>Emergency: <strong class="emergency-highlight">0115 577 222</strong></span></div>
+      </div>
+      <div class="top-bar-actions">
+        <a href="login.html" class="portal-link"><i class="fa-solid fa-user-lock"></i> Patient Portal</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap"><i class="fa-solid fa-plus"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </a>
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="departments.html" class="nav-link">Departments</a>
+        <a href="doctors.html" class="nav-link active">Find a Doctor</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
+        <a href="packages.html" class="nav-link">Packages</a>
+        <a href="index.html#contact" class="nav-link">Contact</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <div class="page-hero-tag"><i class="fa-solid fa-user-doctor"></i> Consultant Directory</div>
+      <h1>Find &amp; Channel a <span>Specialist</span></h1>
+      <p>Browse 200+ expert consultants across all specialties. Book your appointment instantly with real-time availability.</p>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="doctors-page-layout">
+
+      <!-- SIDEBAR FILTER -->
+      <aside class="filter-sidebar">
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <h3><i class="fa-solid fa-sliders"></i> Filters</h3>
+            <span class="filter-clear" onclick="clearFilters()">Clear All</span>
+          </div>
+
+          <div class="filter-section">
+            <div class="filter-section-title">Specialty</div>
+            <label class="filter-check-item"><input type="checkbox" class="spec-filter" value="Cardiology" onchange="filterDoctors()"> Cardiology <span class="count">18</span></label>
+            <label class="filter-check-item"><input type="checkbox" class="spec-filter" value="Neurology" onchange="filterDoctors()"> Neurology <span class="count">14</span></label>
+            <label class="filter-check-item"><input type="checkbox" class="spec-filter" value="Orthopedics" onchange="filterDoctors()"> Orthopedics <span class="count">16</span></label>
+            <label class="filter-check-item"><input type="checkbox" class="spec-filter" value="Pediatrics" onchange="filterDoctors()"> Pediatrics <span class="count">12</span></label>
+            <label class="filter-check-item"><input type="checkbox" class="spec-filter" value="Oncology" onchange="filterDoctors()"> Oncology <span class="count">10</span></label>
+            <label class="filter-check-item"><input type="checkbox" class="spec-filter" value="Gastroenterology" onchange="filterDoctors()"> Gastroenterology <span class="count">9</span></label>
+            <label class="filter-check-item"><input type="checkbox" class="spec-filter" value="Radiology" onchange="filterDoctors()"> Radiology <span class="count">8</span></label>
+            <label class="filter-check-item"><input type="checkbox" class="spec-filter" value="Emergency Care" onchange="filterDoctors()"> Emergency Care <span class="count">24/7</span></label>
+          </div>
+
+          <div class="filter-section">
+            <div class="filter-section-title">Availability</div>
+            <div class="availability-toggle">
+              <div class="avail-chip active" onclick="toggleAvail(this, 'all')">All</div>
+              <div class="avail-chip" onclick="toggleAvail(this, 'today')">Today</div>
+              <div class="avail-chip" onclick="toggleAvail(this, 'tomorrow')">Tomorrow</div>
+              <div class="avail-chip" onclick="toggleAvail(this, 'week')">This Week</div>
+            </div>
+          </div>
+
+          <div class="filter-section">
+            <div class="filter-section-title">Max Consultation Fee</div>
+            <div class="fee-range-display">
+              <span>LKR 1,500</span>
+              <strong id="feeDisplay">LKR 20,000</strong>
+            </div>
+            <input type="range" id="feeRange" min="1500" max="20000" value="20000" step="500" oninput="document.getElementById('feeDisplay').textContent = 'LKR ' + parseInt(this.value).toLocaleString(); filterDoctors();">
+          </div>
+
+          <div class="filter-section">
+            <div class="filter-section-title">Gender</div>
+            <label class="filter-check-item"><input type="checkbox" class="gender-filter" value="male" onchange="filterDoctors()"> Male Doctors</label>
+            <label class="filter-check-item"><input type="checkbox" class="gender-filter" value="female" onchange="filterDoctors()"> Female Doctors</label>
+          </div>
+        </div>
+      </aside>
+
+      <!-- DOCTORS MAIN CONTENT -->
+      <div class="doctors-main">
+        <!-- Search Bar -->
+        <div class="search-bar-row">
+          <div class="search-input-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="doctorSearch" placeholder="Search by doctor name or specialty..." oninput="filterDoctors()">
+          </div>
+          <button class="btn btn-primary" onclick="openRegisterDocModal()" data-roles="admin" style="white-space:nowrap; padding: 0.85rem 1.25rem;">
+            <i class="fa-solid fa-user-plus"></i> Register Doctor
+          </button>
+        </div>
+
+        <div class="results-info" id="resultsInfo">Loading doctors...</div>
+
+        <!-- Doctor Cards -->
+        <div class="doctors-grid-full" id="doctorsGridFull"></div>
+        <div class="no-results" id="noResults" style="display:none;">
+          <i class="fa-solid fa-user-slash"></i>
+          <h3>No doctors found</h3>
+          <p>Try adjusting your filters or search term.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appointment Booking Modal -->
+  <div class="appt-modal-overlay" id="apptModal">
+    <div class="appt-modal-box">
+      <div class="appt-modal-header">
+        <h3><i class="fa-solid fa-calendar-plus"></i> Book Appointment</h3>
+        <button class="appt-modal-close" onclick="closeApptModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="appt-modal-body">
+        <div class="selected-doc-info" id="selectedDocInfo"></div>
+        <form class="appt-form" id="apptForm" onsubmit="submitAppt(event)">
+          <div class="form-group">
+            <label>Patient Name</label>
+            <input type="text" id="apptPatientName" placeholder="Your full name" required>
+          </div>
+          <div class="form-group">
+            <label>Contact Number</label>
+            <input type="tel" pattern="(?:0|\+94(?: |-)?)[0-9]{2}(?: |-)?[0-9]{3}(?: |-)?[0-9]{4}" title="Sri Lankan number, e.g. 0771234567 or +94 77 123 4567" id="apptPatientPhone" placeholder="+94 7X XXX XXXX" required>
+          </div>
+          <div class="form-group">
+            <label>Email (optional)</label>
+            <input type="email" id="apptPatientEmail" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label>Preferred Date</label>
+            <input type="date" id="apptDate" required>
+          </div>
+          <div class="form-group">
+            <label>Time Slot</label>
+            <select id="apptTimeSlot" required>
+              <option>Morning (09:00 AM - 12:00 PM)</option>
+              <option>Afternoon (01:00 PM - 04:00 PM)</option>
+              <option selected>Evening (05:00 PM - 08:00 PM)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btnConfirmAppt" style="width:100%;">
+            <i class="fa-solid fa-circle-check"></i> Confirm Appointment
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit Doctor Modal -->
+  <div class="appt-modal-overlay" id="regDocModal">
+    <div class="appt-modal-box" style="max-width: 580px;">
+      <div class="appt-modal-header" style="background: linear-gradient(135deg, var(--primary-navy), #1e3a6e); color:#fff;">
+        <h3 style="color:#fff;" id="regDocTitleText"><i class="fa-solid fa-user-doctor"></i> Register New Doctor</h3>
+        <button class="appt-modal-close" onclick="closeRegisterDocModal()" style="color:#fff;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="appt-modal-body" style="padding: 1.5rem 1.75rem; max-height: 75vh; overflow-y: auto;">
+        <form class="appt-form" id="regDocForm" onsubmit="submitDoctorRegistration(event)">
+          <input type="hidden" id="regDocId">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Doctor Full Name *</label>
+              <input type="text" id="regDocName" class="form-control" placeholder="e.g. Dr. Kasun Perera" required>
+            </div>
+            <div class="form-group">
+              <label>Specialty Department *</label>
+              <select id="regDocDept" class="form-control" required></select>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Designation Title *</label>
+              <input type="text" id="regDocTitle" class="form-control" placeholder="e.g. Senior Consultant" required>
+            </div>
+            <div class="form-group">
+              <label>Qualifications *</label>
+              <input type="text" id="regDocQual" class="form-control" placeholder="e.g. MBBS, MD, FRCP" required>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Consultation Fee (LKR) *</label>
+              <input type="number" id="regDocFee" class="form-control" placeholder="3500" required min="0">
+            </div>
+            <div class="form-group">
+              <label>Room Number *</label>
+              <input type="text" id="regDocRoom" class="form-control" placeholder="Room 205, Main Block" required>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Schedule Days *</label>
+              <input type="text" id="regDocDays" class="form-control" placeholder="Mon, Wed, Fri" required>
+            </div>
+            <div class="form-group">
+              <label>Schedule Time *</label>
+              <input type="text" id="regDocTime" class="form-control" placeholder="04:00 PM - 07:00 PM" required>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group">
+              <label>Gender *</label>
+              <select id="regDocGender" class="form-control" required>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" pattern="(?:0|\+94(?: |-)?)[0-9]{2}(?: |-)?[0-9]{3}(?: |-)?[0-9]{4}" title="Sri Lankan number, e.g. 0771234567 or +94 77 123 4567" id="regDocPhone" class="form-control" placeholder="0771234567">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Doctor Email</label>
+            <input type="email" id="regDocEmail" class="form-control" placeholder="dr.perera@medicare.lk">
+          </div>
+
+          <div class="form-group">
+            <label>Photo URL (optional)</label>
+            <input type="url" id="regDocImg" class="form-control" placeholder="https://...">
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="btnSubmitDoc" style="width:100%; margin-top:0.5rem; padding:0.9rem;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Save & Register Doctor
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer" id="contact">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 Medicare Hospital Management System. All Rights Reserved.</div>
+        <div style="display:flex;gap:1.5rem;">
+          <a href="index.html" style="color:rgba(255,255,255,0.6);">Home</a>
+          <a href="login.html" style="color:rgba(255,255,255,0.6);">Login</a>
+          <a href="appointments.html" style="color:rgba(255,255,255,0.6);">My Appointments</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/api.js?v=20261004-2"></script>
+  <script>
+    // Doctors are loaded from MySQL through GET /api/doctors
+    let doctors = [];
+    let departments = [];
+    let selectedDoc = null;
+
+    async function loadDoctors() {
+      try {
+        const [docList, deptList] = await Promise.all([api('/doctors'), api('/departments')]);
+        doctors = docList.map(toUiDoctor);
+        departments = deptList;
+        fillSelect(document.getElementById('regDocDept'), departments, d => d.id, d => d.name);
+        updateSpecialtyCounts();
+        filterDoctors();
+      } catch (err) {
+        document.getElementById('resultsInfo').innerHTML =
+          `<span style="color:#dc2626;"><i class="fa-solid fa-circle-exclamation"></i> ${esc(err.message)}</span>`;
+        renderDoctors([]);
+      }
+    }
+
+    function updateSpecialtyCounts() {
+      document.querySelectorAll('.spec-filter').forEach(cb => {
+        const count = doctors.filter(d => d.dept === cb.value).length;
+        const span = cb.parentElement.querySelector('.count');
+        if (span) span.textContent = count;
+      });
+    }
+
+    function renderDoctors(list) {
+      const grid = document.getElementById('doctorsGridFull');
+      const noRes = document.getElementById('noResults');
+      document.getElementById('resultsInfo').innerHTML = `<strong>${list.length}</strong> Doctor${list.length !== 1 ? 's' : ''} found`;
+
+      if (list.length === 0) { grid.innerHTML = ''; noRes.style.display = 'block'; return; }
+      noRes.style.display = 'none';
+
+      grid.innerHTML = list.map(d => `
+        <div class="doc-card">
+          <img class="doc-card-image" src="${esc(d.img)}" alt="${esc(d.name)}" loading="lazy">
+          <div class="doc-card-dept-badge">${esc(d.dept)}</div>
+          <div class="doc-card-body">
+            <div class="doc-name">${esc(d.name)}</div>
+            <div class="doc-title">${esc(d.title)}</div>
+            <div class="doc-qual"><i class="fa-solid fa-graduation-cap"></i> ${esc(d.qual)}</div>
+            <div class="doc-meta">
+              <div class="doc-meta-item"><i class="fa-solid fa-door-open"></i> ${esc(d.room)}</div>
+              <div class="doc-meta-item"><i class="fa-regular fa-clock"></i> ${esc(d.time)}</div>
+            </div>
+            <div class="doc-schedule-chips">
+              ${d.schedule.map(s => `<span class="day-chip">${esc(s)}</span>`).join('')}
+            </div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;" data-roles="admin">
+              <button class="btn btn-secondary" style="flex:1; padding:0.4rem; font-size:0.8rem;" onclick="openEditDocModal(${d.id})"><i class="fa-solid fa-pen"></i> Edit</button>
+              <button class="btn btn-secondary" style="flex:1; padding:0.4rem; font-size:0.8rem; color:#dc2626; border-color:#fca5a5;" onclick="deleteDoctor(${d.id})"><i class="fa-solid fa-trash"></i> Delete</button>
+            </div>
+          </div>
+          <div class="doc-card-footer">
+            <div class="doc-fee">LKR ${d.fee.toLocaleString()} <span>/ visit</span></div>
+            <button class="btn-channel" onclick="openApptModal(${d.id})"><i class="fa-solid fa-calendar-plus"></i> Channel</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterDoctors() {
+      const query = document.getElementById('doctorSearch').value.toLowerCase();
+      const specChecked = [...document.querySelectorAll('.spec-filter:checked')].map(c => c.value);
+      const maxFee = parseInt(document.getElementById('feeRange').value);
+      const genderChecked = [...document.querySelectorAll('.gender-filter:checked')].map(c => c.value);
+
+      let filtered = doctors.filter(d => {
+        const matchSearch = d.name.toLowerCase().includes(query) || d.dept.toLowerCase().includes(query) || d.title.toLowerCase().includes(query);
+        const matchSpec = specChecked.length === 0 || specChecked.includes(d.dept);
+        const matchFee = d.fee <= maxFee;
+        const matchGender = genderChecked.length === 0 || genderChecked.includes(d.gender);
+        return matchSearch && matchSpec && matchFee && matchGender;
+      });
+
+      renderDoctors(filtered);
+    }
+
+    function toggleAvail(el, val) {
+      document.querySelectorAll('.avail-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function clearFilters() {
+      document.querySelectorAll('.spec-filter, .gender-filter').forEach(c => c.checked = false);
+      document.getElementById('feeRange').value = 20000;
+      document.getElementById('feeDisplay').textContent = 'LKR 20,000';
+      document.getElementById('doctorSearch').value = '';
+      document.querySelectorAll('.avail-chip').forEach((c, i) => i === 0 ? c.classList.add('active') : c.classList.remove('active'));
+      filterDoctors();
+    }
+
+    // ---------- Book appointment (CREATE appointment) ----------
+    function openApptModal(id) {
+      selectedDoc = doctors.find(d => d.id === id);
+      if (!selectedDoc) return;
+      document.getElementById('selectedDocInfo').innerHTML = `
+        <img src="${esc(selectedDoc.img)}" alt="${esc(selectedDoc.name)}">
+        <div>
+          <div style="font-weight:700;color:var(--primary-navy);">${esc(selectedDoc.name)}</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);">${esc(selectedDoc.title)}</div>
+          <div style="font-size:0.82rem;color:var(--primary-blue);font-weight:600;">LKR ${selectedDoc.fee.toLocaleString()} / visit</div>
+        </div>
+      `;
+      const today = new Date();
+      document.getElementById('apptDate').min = today.toISOString().split('T')[0];
+      // A logged-in patient books under their own account so it appears in "My Appointments"
+      const user = Auth.currentUser();
+      const emailField = document.getElementById('apptPatientEmail');
+      emailField.readOnly = Auth.hasRole('patient');
+      if (Auth.hasRole('patient')) {
+        document.getElementById('apptPatientName').value = [user.firstName, user.lastName].filter(Boolean).join(' ');
+        emailField.value = user.email;
+      }
+      document.getElementById('apptModal').classList.add('active');
+    }
+
+    function closeApptModal() {
+      document.getElementById('apptModal').classList.remove('active');
+    }
+
+    async function submitAppt(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnConfirmAppt');
+      btn.disabled = true;
+      try {
+        const saved = await api('/appointments', 'POST', {
+          doctorId: selectedDoc.id,
+          patientName: document.getElementById('apptPatientName').value.trim(),
+          patientPhone: document.getElementById('apptPatientPhone').value.trim(),
+          patientEmail: document.getElementById('apptPatientEmail').value.trim() || null,
+          appointmentDate: document.getElementById('apptDate').value,
+          timeSlot: document.getElementById('apptTimeSlot').value
+        });
+        closeApptModal();
+        document.getElementById('apptForm').reset();
+        alert(`✅ Appointment saved!\nDoctor: ${selectedDoc.name}\nReference: ${saved.referenceCode}\nDate: ${saved.appointmentDate}\n\nYou can view or change it on the Appointments page.`);
+      } catch (err) {
+        alert('❌ Could not book appointment:\n' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Mobile nav toggle
+    document.getElementById('mobileToggle').addEventListener('click', () => {
+      document.getElementById('navMenu').classList.toggle('active');
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('apptModal').addEventListener('click', function(e) {
+      if (e.target === this) closeApptModal();
+    });
+
+    // ---------- Add / Edit / Delete doctor ----------
+    function openRegisterDocModal() {
+      document.getElementById('regDocForm').reset();
+      document.getElementById('regDocId').value = '';
+      document.getElementById('regDocTitleText').innerHTML = '<i class="fa-solid fa-user-doctor"></i> Register New Doctor';
+      document.getElementById('btnSubmitDoc').innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save & Register Doctor';
+      document.getElementById('regDocModal').classList.add('active');
+    }
+
+    function openEditDocModal(id) {
+      const d = doctors.find(doc => doc.id === id);
+      if (!d) return;
+      document.getElementById('regDocId').value = d.id;
+      document.getElementById('regDocName').value = d.name;
+      document.getElementById('regDocDept').value = d.deptId || '';
+      document.getElementById('regDocTitle').value = d.title;
+      document.getElementById('regDocQual').value = d.qual;
+      document.getElementById('regDocFee').value = d.fee;
+      document.getElementById('regDocRoom').value = d.room;
+      document.getElementById('regDocDays').value = d.schedule.join(', ');
+      document.getElementById('regDocTime').value = d.time;
+      document.getElementById('regDocGender').value = d.gender || 'male';
+      document.getElementById('regDocPhone').value = d.phone;
+      document.getElementById('regDocEmail').value = d.email;
+      document.getElementById('regDocImg').value = d.img;
+      document.getElementById('regDocTitleText').innerHTML = '<i class="fa-solid fa-user-pen"></i> Edit Doctor #' + d.id;
+      document.getElementById('btnSubmitDoc').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+      document.getElementById('regDocModal').classList.add('active');
+    }
+
+    function closeRegisterDocModal() {
+      document.getElementById('regDocModal').classList.remove('active');
+    }
+
+    document.getElementById('regDocModal').addEventListener('click', function(e) {
+      if (e.target === this) closeRegisterDocModal();
+    });
+
+    async function submitDoctorRegistration(e) {
+      e.preventDefault();
+      const id = document.getElementById('regDocId').value;
+      const btn = document.getElementById('btnSubmitDoc');
+      const originalLabel = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+
+      // Field names match the Doctor entity in the backend
+      const doctor = {
+        name: document.getElementById('regDocName').value.trim(),
+        title: document.getElementById('regDocTitle').value.trim(),
+        department: { id: parseInt(document.getElementById('regDocDept').value) },
+        qualifications: document.getElementById('regDocQual').value.trim(),
+        fee: parseFloat(document.getElementById('regDocFee').value),
+        roomNumber: document.getElementById('regDocRoom').value.trim(),
+        scheduleDays: document.getElementById('regDocDays').value.trim(),
+        timeSlot: document.getElementById('regDocTime').value.trim(),
+        gender: document.getElementById('regDocGender').value,
+        phone: document.getElementById('regDocPhone').value.trim(),
+        email: document.getElementById('regDocEmail').value.trim(),
+        imageUrl: document.getElementById('regDocImg').value.trim() || null
+      };
+
+      try {
+        const saved = id
+          ? await api(`/doctors/${id}`, 'PUT', doctor)
+          : await api('/doctors', 'POST', doctor);
+        closeRegisterDocModal();
+        await loadDoctors();
+        alert(`✅ ${saved.name} was ${id ? 'updated' : 'registered'} successfully (ID ${saved.id}).`);
+      } catch (err) {
+        alert('❌ Could not save doctor:\n' + err.message);
+      } finally {
+        btn.innerHTML = originalLabel;
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteDoctor(id) {
+      const d = doctors.find(doc => doc.id === id);
+      if (!confirm(`Delete ${d ? d.name : 'this doctor'}? This cannot be undone.`)) return;
+      try {
+        const result = await api(`/doctors/${id}`, 'DELETE');
+        await loadDoctors();
+        alert('✅ ' + result.message);
+      } catch (err) {
+        alert('❌ Could not delete doctor:\n' + err.message);
+      }
+    }
+
+    // Initial load
+    loadDoctors();
+  </script>
+</body>
+</html>
