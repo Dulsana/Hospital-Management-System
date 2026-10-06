@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blood Bank Management — Medicare Hospital</title>
+  <meta name="description" content="Medicare Hospital Blood Bank Management System — Full CRUD & Inventory Module">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .page-hero { background: linear-gradient(135deg, #0f172a 0%, #7f1d1d 50%, #dc2626 100%); padding: 3rem 0 2rem; position: relative; overflow: hidden; }
+    .page-hero::after { content:''; position:absolute; right:-100px; top:-100px; width:500px; height:500px; background:radial-gradient(circle,rgba(220,38,38,0.2) 0%,transparent 70%); }
+    .page-hero-content { position: relative; z-index: 1; }
+    .page-hero-tag { display:inline-block; background:rgba(252,165,165,0.15); color:#fca5a5; padding:0.35rem 1rem; border-radius:var(--radius-full); font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.75rem; border:1px solid rgba(252,165,165,0.3); }
+    .page-hero h1 { color:#fff; font-size:2.2rem; margin-bottom:0.3rem; }
+    .page-hero h1 span { color:#fca5a5; }
+    .page-hero p { color:rgba(255,255,255,0.7); font-size:0.95rem; max-width:650px; }
+
+    /* Module Navigation Tabs */
+    .bb-nav-tabs { display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.75rem 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-light); }
+    .bb-tab-btn { background: var(--bg-surface); border: 1px solid var(--border-light); color: var(--text-dark); padding: 0.65rem 1.2rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.88rem; cursor: pointer; white-space: nowrap; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }
+    .bb-tab-btn:hover { background: var(--bg-main); border-color: var(--primary-red, #dc2626); color: #dc2626; }
+    .bb-tab-btn.active { background: #dc2626; color: #fff; border-color: #dc2626; box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
+
+    /* Stats Dashboard */
+    .blood-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .blood-stat { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm); }
+    .blood-stat-icon { width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .blood-stat-num { font-size: 1.6rem; font-weight: 800; color: var(--primary-navy); line-height: 1; }
+    .blood-stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+
+    /* Live Inventory Cards */
+    .blood-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .blood-card { background: var(--bg-surface); border-radius: var(--radius-lg); border: 2px solid var(--border-light); padding: 1.25rem 1rem; text-align: center; position: relative; overflow: hidden; }
+    .blood-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #dc2626, #ef4444); }
+    .blood-type-label { font-size: 2.2rem; font-weight: 900; color: var(--primary-navy); line-height: 1; margin-bottom: 0.2rem; }
+    .blood-type-positive { color: #dc2626; }
+    .blood-units { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .blood-units-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .blood-status-badge { margin: 0.5rem auto 0; display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; }
+    .blood-sufficient { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.3); }
+    .blood-critical { background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.3); animation: pulse-red-soft 1.5s infinite; }
+    @keyframes pulse-red-soft { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+
+    /* Table & Card Wrapper */
+    .bb-panel { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+    .bb-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem; }
+    .bb-panel-title { font-size: 1.25rem; font-weight: 700; color: var(--primary-navy); display: flex; align-items: center; gap: 0.6rem; }
+    .bb-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    /* Data Tables */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; }
+    .data-table th { background: var(--bg-main); padding: 0.85rem 1rem; font-weight: 700; color: var(--primary-navy); border-bottom: 2px solid var(--border-medium); }
+    .data-table td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-dark); vertical-align: middle; }
+    .data-table tr:hover { background: rgba(241,245,249,0.6); }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; }
+    .badge-success { background: rgba(16,185,129,0.1); color: #059669; }
+    .badge-warning { background: rgba(245,158,11,0.1); color: #d97706; }
+    .badge-danger { background: rgba(220,38,38,0.1); color: #dc2626; }
+    .badge-info { background: rgba(59,130,246,0.1); color: #2563eb; }
+
+    /* Forms & Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
+    .modal-overlay.active { display: flex; }
+    .modal-card { background: #fff; width: 100%; max-width: 650px; border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-xl); position: relative; max-height: 90vh; overflow-y: auto; }
+    .modal-close { position: absolute; right: 1.25rem; top: 1.25rem; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); border: none; background: none; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-navy); margin-bottom: 0.35rem; }
+    .form-control { width: 100%; padding: 0.75rem 0.9rem; border: 1.5px solid var(--border-medium); border-radius: var(--radius-md); font-size: 0.9rem; }
+    .form-control:focus { outline: none; border-color: #dc2626; }
+
+    .btn-red { background: #dc2626; color: #fff; border: none; padding: 0.65rem 1.25rem; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; transition: var(--transition); }
+    .btn-red:hover { background: #b91c1c; }
+  </style>
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item"><i class="fa-solid fa-phone-flip"></i><span>Blood Bank Hotline: <strong>0115 777 888</strong></span></div>
+        <div class="top-bar-info-item"><i class="fa-solid fa-truck-medical emergency-highlight"></i><span>Emergency Request: <strong class="emergency-highlight">0115 577 222</strong></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap"><i class="fa-solid fa-plus"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </a>
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="departments.html" class="nav-link">Departments</a>
+        <a href="doctors.html" class="nav-link">Find a Doctor</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
+        <a href="pharmacy.html" class="nav-link">Pharmacy</a>
+        <a href="bloodbank.html" class="nav-link active">Blood Bank</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <div class="page-hero-tag"><i class="fa-solid fa-droplet"></i> Blood Bank Full Management Module</div>
+      <h1>Blood Bank <span>Management</span></h1>
+      <p>Complete lifecycle management: Donor Registration, Intake Screening, Infectious Disease Testing, Unit Quarantining, Inventory Tracking, Patient Requests, and Controlled Stock Distribution.</p>
+    </div>
+  </section>
+
+  <div class="container" style="margin-top: 1.5rem;">
+    <!-- Navigation Tabs -->
+    <div class="bb-nav-tabs">
+      <button class="bb-tab-btn active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+      <button class="bb-tab-btn" onclick="switchTab('donors')"><i class="fa-solid fa-user-heart"></i> Donors</button>
+      <button class="bb-tab-btn" onclick="switchTab('donations')"><i class="fa-solid fa-hand-holding-medical"></i> Donations</button>
+      <button class="bb-tab-btn" onclick="switchTab('testing')"><i class="fa-solid fa-vial-virus"></i> Blood Testing</button>
+      <button class="bb-tab-btn" onclick="switchTab('units')"><i class="fa-solid fa-box-archive"></i> Blood Units</button>
+      <button class="bb-tab-btn" onclick="switchTab('requests')"><i class="fa-solid fa-clipboard-list"></i> Blood Requests</button>
+      <button class="bb-tab-btn" onclick="switchTab('issues')"><i class="fa-solid fa-truck-ramp-box"></i> Blood Issues</button>
+      <button class="bb-tab-btn" onclick="switchTab('transactions')"><i class="fa-solid fa-clock-rotate-left"></i> Audit History</button>
+    </div>
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content">
+      <div class="blood-stats">
+        <div class="blood-stat">
+          <div class="blood-stat-icon" style="background:rgba(220,38,38,0.1);color:#dc2626;"><i class="fa-solid fa-droplet"></i></div>
+          <div><div class="blood-stat-num" id="stat-units">0</div><div class="blood-stat-label">Available Blood Units</div></div>
+        </div>
+        <div class="blood-stat">
+          <div class="blood-stat-icon" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fa-solid fa-user-heart"></i></div>
+          <div><div class="blood-stat-num" id="stat-donors">0</div><div class="blood-stat-label">Registered Donors</div></div>
+        </div>
+        <div class="blood-stat">
+          <div class="blood-stat-icon" style="background:rgba(245,158,11,0.1);color:#d97706;"><i class="fa-solid fa-clock"></i></div>
+          <div><div class="blood-stat-num" id="stat-requests">0</div><div class="blood-stat-label">Pending Requests</div></div>
+        </div>
+        <div class="blood-stat">
+          <div class="blood-stat-icon" style="background:rgba(59,130,246,0.1);color:#2563eb;"><i class="fa-solid fa-syringe"></i></div>
+          <div><div class="blood-stat-num" id="stat-today-donations">0</div><div class="blood-stat-label">Today's Donations</div></div>
+        </div>
+      </div>
+
+      <div class="bb-panel">
+        <div class="bb-panel-header">
+          <div class="bb-panel-title"><i class="fa-solid fa-droplet" style="color:#dc2626;"></i> Live Inventory by Blood Group</div>
+          <span style="font-size:0.85rem;color:var(--text-muted);" id="live-time"></span>
+        </div>
+        <div class="blood-grid" id="bloodGrid"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: DONORS -->
+    <div id="tab-donors" class="tab-content" style="display:none;">
+      <div class="bb-panel">
+        <div class="bb-panel-header">
+          <div class="bb-panel-title"><i class="fa-solid fa-user-heart"></i> Donor Management</div>
+          <div class="bb-actions">
+            <button class="btn-red" onclick="openDonorModal()" data-roles="staff admin"><i class="fa-solid fa-plus"></i> Register New Donor</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Donor Number</th>
+                <th>Name</th>
+                <th>Blood Type</th>
+                <th>Gender</th>
+                <th>Phone</th>
+                <th>Eligibility</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="donorTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: DONATIONS -->
+    <div id="tab-donations" class="tab-content" style="display:none;">
+      <div class="bb-panel">
+        <div class="bb-panel-header">
+          <div class="bb-panel-title"><i class="fa-solid fa-hand-holding-medical"></i> Blood Donations</div>
+          <div class="bb-actions">
+            <button class="btn-red" onclick="openDonationModal()" data-roles="staff admin"><i class="fa-solid fa-plus"></i> Record New Donation</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Donation #</th>
+                <th>Donor ID</th>
+                <th>Date</th>
+                <th>Blood Type</th>
+                <th>Volume</th>
+                <th>Location</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="donationTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: TESTING -->
+    <div id="tab-testing" class="tab-content" style="display:none;">
+      <div class="bb-panel">
+        <div class="bb-panel-header">
+          <div class="bb-panel-title"><i class="fa-solid fa-vial-virus"></i> Infectious Disease Blood Screening</div>
+          <div class="bb-actions">
+            <button class="btn-red" onclick="openTestModal()" data-roles="staff admin"><i class="fa-solid fa-microscope"></i> Record Test Result</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Test ID</th>
+                <th>Unit ID</th>
+                <th>HIV</th>
+                <th>Hep B</th>
+                <th>Hep C</th>
+                <th>Syphilis</th>
+                <th>Malaria</th>
+                <th>Tested By</th>
+                <th>Overall Result</th>
+              </tr>
+            </thead>
+            <tbody id="testingTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: BLOOD UNITS -->
+    <div id="tab-units" class="tab-content" style="display:none;">
+      <div class="bb-panel">
+        <div class="bb-panel-header">
+          <div class="bb-panel-title"><i class="fa-solid fa-box-archive"></i> Blood Unit Repository</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Unit Number</th>
+                <th>Blood Type</th>
+                <th>Volume</th>
+                <th>Collection Date</th>
+                <th>Expiry Date</th>
+                <th>Storage Location</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="unitsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: REQUESTS -->
+    <div id="tab-requests" class="tab-content" style="display:none;">
+      <div class="bb-panel">
+        <div class="bb-panel-header">
+          <div class="bb-panel-title"><i class="fa-solid fa-clipboard-list"></i> Blood Requisitions</div>
+          <div class="bb-actions">
+            <button class="btn-red" onclick="openRequestModal()"><i class="fa-solid fa-plus"></i> New Blood Request</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Request #</th>
+                <th>Patient Name</th>
+                <th>Blood Type</th>
+                <th>Quantity</th>
+                <th>Urgency</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="requestsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 7: ISSUES -->
+    <div id="tab-issues" class="tab-content" style="display:none;">
+      <div class="bb-panel">
+        <div class="bb-panel-header">
+          <div class="bb-panel-title"><i class="fa-solid fa-truck-ramp-box"></i> Issued Blood Log</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Issue #</th>
+                <th>Req ID</th>
+                <th>Blood Type</th>
+                <th>Qty</th>
+                <th>Issued By</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="issuesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 8: TRANSACTIONS -->
+    <div id="tab-transactions" class="tab-content" style="display:none;">
+      <div class="bb-panel">
+        <div class="bb-panel-header">
+          <div class="bb-panel-title"><i class="fa-solid fa-clock-rotate-left"></i> Inventory Audit Trail</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tx ID</th>
+                <th>Unit ID</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Reference</th>
+                <th>Performed By</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD DONOR -->
+  <div class="modal-overlay" id="donorModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('donorModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);" id="donorModalTitle"><i class="fa-solid fa-user-plus"></i> Register Donor</h3>
+      <form id="donorForm" onsubmit="saveDonor(event)">
+        <input type="hidden" id="d-id">
+        <div class="form-grid-2">
+          <div class="form-group"><label>First Name</label><input type="text" id="d-fn" class="form-control" required></div>
+          <div class="form-group"><label>Last Name</label><input type="text" id="d-ln" class="form-control" required></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group"><label>Date of Birth</label><input type="date" id="d-dob" class="form-control" required></div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select id="d-gender" class="form-control" required>
+              <option value="Male">Male</option><option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Blood Type</label>
+            <select id="d-bt" class="form-control" required>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Phone</label><input type="tel" pattern="(?:0|\+94(?: |-)?)[0-9]{2}(?: |-)?[0-9]{3}(?: |-)?[0-9]{4}" title="Sri Lankan number, e.g. 0771234567 or +94 77 123 4567" id="d-phone" class="form-control" required></div>
+        </div>
+        <div class="form-group"><label>Email</label><input type="email" id="d-email" class="form-control"></div>
+        <div class="form-grid-2">
+          <div class="form-group"><label>City</label><input type="text" id="d-city" class="form-control"></div>
+          <div class="form-group"><label>Address</label><input type="text" id="d-address" class="form-control"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Eligibility</label>
+            <select id="d-elig" class="form-control"><option>ELIGIBLE</option><option>TEMPORARILY_DEFERRED</option><option>PERMANENTLY_DEFERRED</option></select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="d-status" class="form-control"><option>ACTIVE</option><option>INACTIVE</option></select>
+          </div>
+        </div>
+        <button type="submit" class="btn-red" style="width:100%;margin-top:0.5rem;">Save Donor</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD DONATION -->
+  <div class="modal-overlay" id="donationModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('donationModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);"><i class="fa-solid fa-hand-holding-medical"></i> Record Blood Donation</h3>
+      <form onsubmit="saveDonation(event)">
+        <div class="form-group"><label>Donor</label><select id="dn-donor-id" class="form-control" required></select></div>
+        <div class="form-group"><label>Volume (ml)</label><input type="number" id="dn-vol" class="form-control" value="450" required></div>
+        <div class="form-group"><label>Location</label><input type="text" id="dn-loc" class="form-control" value="Main Donor Hall" required></div>
+        <div class="form-group"><label>Screening Notes</label><textarea id="dn-notes" class="form-control" rows="2" placeholder="Vitals normal..."></textarea></div>
+        <button type="submit" class="btn-red" style="width:100%;margin-top:0.5rem;">Submit Donation</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: BLOOD TEST -->
+  <div class="modal-overlay" id="testModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('testModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);"><i class="fa-solid fa-vial"></i> Infectious Marker Test Result</h3>
+      <form onsubmit="saveTest(event)">
+        <input type="hidden" id="t-don-id">
+        <div class="form-group"><label>Blood Unit (waiting for testing)</label><select id="t-unit-id" class="form-control" required></select></div>
+        <div class="form-group"><label>Confirmed Blood Type Result</label><input type="text" id="t-bt" class="form-control" placeholder="e.g. O+" required></div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>HIV Result</label>
+            <select id="t-hiv" class="form-control"><option>NEGATIVE</option><option>POSITIVE</option></select>
+          </div>
+          <div class="form-group">
+            <label>Hepatitis B Result</label>
+            <select id="t-hepb" class="form-control"><option>NEGATIVE</option><option>POSITIVE</option></select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Hepatitis C Result</label>
+            <select id="t-hepc" class="form-control"><option>NEGATIVE</option><option>POSITIVE</option></select>
+          </div>
+          <div class="form-group">
+            <label>Syphilis Result</label>
+            <select id="t-syp" class="form-control"><option>NEGATIVE</option><option>POSITIVE</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Malaria Result</label>
+          <select id="t-mal" class="form-control"><option>NEGATIVE</option><option>POSITIVE</option></select>
+        </div>
+        <div class="form-group"><label>Lab Specialist Name</label><input type="text" id="t-by" class="form-control" value="Dr. Perera (Lab Head)"></div>
+        <button type="submit" class="btn-red" style="width:100%;margin-top:0.5rem;">Save Screening Result</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: BLOOD REQUEST -->
+  <div class="modal-overlay" id="requestModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('requestModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);" id="requestModalTitle"><i class="fa-solid fa-clipboard-question"></i> Create Blood Request</h3>
+      <form id="requestForm" onsubmit="saveRequest(event)">
+        <input type="hidden" id="r-id">
+        <div class="form-group"><label>Patient Name</label><input type="text" id="r-pname" class="form-control" required></div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Blood Type</label>
+            <select id="r-bt" class="form-control" required>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Quantity</label><input type="number" id="r-qty" class="form-control" value="1" min="1" required></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Urgency</label>
+            <select id="r-urgency" class="form-control"><option>NORMAL</option><option>URGENT</option><option>EMERGENCY</option></select>
+          </div>
+          <div class="form-group"><label>Requested By</label><input type="text" id="r-reqby" class="form-control" value="Dr. Aruni Weerasinghe"></div>
+        </div>
+        <div class="form-group"><label>Reason</label><input type="text" id="r-reason" class="form-control" placeholder="e.g. Surgical transfusion" required></div>
+        <button type="submit" class="btn-red" style="width:100%;margin-top:0.5rem;">Submit Requisition</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ISSUE BLOOD -->
+  <div class="modal-overlay" id="issueModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('issueModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);"><i class="fa-solid fa-truck-ramp-box"></i> Issue Blood Unit</h3>
+      <form onsubmit="confirmIssue(event)">
+        <input type="hidden" id="issue-req-id">
+        <div class="form-group"><label>Request Info</label><input type="text" id="issue-req-info" class="form-control" readonly></div>
+        <div class="form-group">
+          <label>Select Available Blood Unit</label>
+          <select id="issue-unit-id" class="form-control" required></select>
+        </div>
+        <div class="form-group"><label>Issued By</label><input type="text" id="issue-by" class="form-control" value="Pharmacist Staff" required></div>
+        <div class="form-group"><label>Notes</label><textarea id="issue-notes" class="form-control" rows="2" placeholder="Cold chain verified"></textarea></div>
+        <button type="submit" class="btn-red" style="width:100%;margin-top:0.5rem;">Confirm Blood Issue</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=20261004-2"></script>
+  <script>
+    // All blood bank data comes from /api/bloodbank/... (see BloodBankController.java)
+    const BB = '/bloodbank';
+    let donors = [], requests = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDashboard();
+    });
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.bb-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById('tab-' + tabName).style.display = 'block';
+      event.currentTarget.classList.add('active');
+
+      const loaders = {
+        dashboard: loadDashboard, donors: loadDonors, donations: loadDonations, testing: loadTesting,
+        units: loadUnits, requests: loadRequests, issues: loadIssues, transactions: loadTransactions
+      };
+      loaders[tabName]();
+    }
+
+    // Show an error row in a table when loading fails
+    function showLoadError(tbodyId, err, cols) {
+      document.getElementById(tbodyId).innerHTML =
+        `<tr><td colspan="${cols}" style="color:#dc2626;text-align:center;padding:1rem;"><i class="fa-solid fa-circle-exclamation"></i> ${esc(err.message)}</td></tr>`;
+    }
+
+    function emptyRow(cols, text) {
+      return `<tr><td colspan="${cols}" style="text-align:center;padding:1rem;color:var(--text-muted);">${text}</td></tr>`;
+    }
+
+    // roles (optional) = who may see the button, e.g. 'staff admin'
+    const smallBtn = (label, onclick, cls, extraStyle, roles) =>
+      `<button onclick="${onclick}" class="${cls}" ${roles ? `data-roles="${roles}"` : ''} style="padding:0.25rem 0.5rem;font-size:0.75rem;margin-right:4px;${extraStyle || ''}">${label}</button>`;
+
+    async function loadDashboard() {
+      try {
+        const data = await api(`${BB}/dashboard`);
+        document.getElementById('stat-units').innerText = data.totalBloodUnits;
+        document.getElementById('stat-donors').innerText = data.totalDonors;
+        document.getElementById('stat-requests').innerText = data.pendingRequests;
+        document.getElementById('stat-today-donations').innerText = data.todayDonations;
+        document.getElementById('live-time').innerText = 'Updated: ' + new Date().toLocaleTimeString();
+
+        const grid = document.getElementById('bloodGrid');
+        grid.innerHTML = Object.entries(data.stockMap).map(([group, count]) => {
+          const isCritical = data.lowStockGroups.includes(group);
+          return `
+            <div class="blood-card">
+              <div class="blood-type-label blood-type-positive">${esc(group)}</div>
+              <div class="blood-units" style="color:${isCritical ? '#dc2626' : '#059669'};">${count}</div>
+              <div class="blood-units-label">Units Available</div>
+              <span class="blood-status-badge ${isCritical ? 'blood-critical' : 'blood-sufficient'}">
+                ${isCritical ? '⚠️ Low Stock' : 'Sufficient'}
+              </span>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        document.getElementById('bloodGrid').innerHTML =
+          `<div style="grid-column:1/-1;text-align:center;color:#dc2626;padding:1rem;">${esc(e.message)}</div>`;
+      }
+    }
+
+    // ---------- Donors (full CRUD) ----------
+    async function loadDonors() {
+      try {
+        donors = await api(`${BB}/donors`);
+        const tbody = document.getElementById('donorTableBody');
+        tbody.innerHTML = donors.length ? donors.map(d => `
+          <tr>
+            <td><strong>${esc(d.donorNumber)}</strong></td>
+            <td>${esc(d.firstName)} ${esc(d.lastName)}</td>
+            <td><span class="badge badge-danger">${esc(d.bloodType)}</span></td>
+            <td>${esc(d.gender)}</td>
+            <td>${esc(d.phone)}</td>
+            <td><span class="badge badge-success">${esc(d.eligibilityStatus)}</span></td>
+            <td><span class="badge ${d.status === 'ACTIVE' ? 'badge-success' : 'badge-danger'}">${esc(d.status)}</span></td>
+            <td style="white-space:nowrap;">
+              ${smallBtn('Edit', `openDonorModal(${d.id})`, 'btn-red', 'background:#1e40af;', 'staff admin')}
+              ${smallBtn('Delete', `deleteDonor(${d.id})`, 'btn-red', '', 'staff admin')}
+            </td>
+          </tr>
+        `).join('') : emptyRow(8, 'No donors registered yet');
+      } catch (err) { showLoadError('donorTableBody', err, 8); }
+    }
+
+    function openDonorModal(id) {
+      const d = id ? donors.find(x => x.id === id) : null;
+      document.getElementById('donorForm').reset();
+      document.getElementById('d-id').value = d ? d.id : '';
+      if (d) {
+        document.getElementById('d-fn').value = d.firstName;
+        document.getElementById('d-ln').value = d.lastName;
+        document.getElementById('d-dob').value = d.dateOfBirth || '';
+        document.getElementById('d-gender').value = d.gender;
+        document.getElementById('d-bt').value = d.bloodType;
+        document.getElementById('d-phone').value = d.phone;
+        document.getElementById('d-email').value = d.email || '';
+        document.getElementById('d-city').value = d.city || '';
+        document.getElementById('d-address').value = d.address || '';
+        document.getElementById('d-elig').value = d.eligibilityStatus || 'ELIGIBLE';
+        document.getElementById('d-status').value = d.status || 'ACTIVE';
+      }
+      document.getElementById('donorModalTitle').innerHTML = d
+        ? `<i class="fa-solid fa-user-pen"></i> Edit Donor ${esc(d.donorNumber)}`
+        : '<i class="fa-solid fa-user-plus"></i> Register Donor';
+      document.getElementById('donorModal').classList.add('active');
+    }
+
+    async function saveDonor(e) {
+      e.preventDefault();
+      const id = document.getElementById('d-id').value;
+      const donor = {
+        firstName: document.getElementById('d-fn').value.trim(),
+        lastName: document.getElementById('d-ln').value.trim(),
+        dateOfBirth: document.getElementById('d-dob').value,
+        gender: document.getElementById('d-gender').value,
+        bloodType: document.getElementById('d-bt').value,
+        phone: document.getElementById('d-phone').value.trim(),
+        email: document.getElementById('d-email').value.trim(),
+        city: document.getElementById('d-city').value.trim(),
+        address: document.getElementById('d-address').value.trim(),
+        eligibilityStatus: document.getElementById('d-elig').value,
+        status: document.getElementById('d-status').value
+      };
+      try {
+        const saved = id ? await api(`${BB}/donors/${id}`, 'PUT', donor) : await api(`${BB}/donors`, 'POST', donor);
+        closeModal('donorModal');
+        loadDonors();
+        alert(`✅ Donor ${saved.donorNumber} ${id ? 'updated' : 'registered'}.`);
+      } catch (err) {
+        alert('❌ Could not save donor:\n' + err.message);
+      }
+    }
+
+    async function deleteDonor(id) {
+      if (!confirm('Delete this donor? Donors with donation history will be set to INACTIVE instead.')) return;
+      try {
+        const res = await api(`${BB}/donors/${id}`, 'DELETE');
+        loadDonors();
+        alert('✅ ' + res.message);
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    // ---------- Donations / tests / units (workflow records: create + read) ----------
+    async function loadDonations() {
+      try {
+        const donations = await api(`${BB}/donations`);
+        document.getElementById('donationTableBody').innerHTML = donations.length ? donations.map(d => `
+          <tr>
+            <td><strong>${esc(d.donationNumber)}</strong></td>
+            <td>DONOR-#${d.donorId}</td>
+            <td>${new Date(d.donationDate).toLocaleString()}</td>
+            <td><span class="badge badge-danger">${esc(d.bloodType)}</span></td>
+            <td>${d.volumeMl} ml</td>
+            <td>${esc(d.donationLocation)}</td>
+            <td><span class="badge badge-info">${esc(d.status)}</span></td>
+          </tr>
+        `).join('') : emptyRow(7, 'No donations recorded yet');
+      } catch (err) { showLoadError('donationTableBody', err, 7); }
+    }
+
+    async function loadTesting() {
+      try {
+        const tests = await api(`${BB}/tests`);
+        document.getElementById('testingTableBody').innerHTML = tests.length ? tests.map(t => `
+          <tr>
+            <td>#${t.id}</td>
+            <td>UNIT-#${t.bloodUnitId}</td>
+            <td>${esc(t.hivResult)}</td>
+            <td>${esc(t.hepatitisBResult)}</td>
+            <td>${esc(t.hepatitisCResult)}</td>
+            <td>${esc(t.syphilisResult)}</td>
+            <td>${esc(t.malariaResult)}</td>
+            <td>${esc(t.testedBy)}</td>
+            <td><span class="badge ${t.overallResult === 'PASSED' ? 'badge-success' : 'badge-danger'}">${esc(t.overallResult)}</span></td>
+          </tr>
+        `).join('') : emptyRow(9, 'No test results yet');
+      } catch (err) { showLoadError('testingTableBody', err, 9); }
+    }
+
+    async function loadUnits() {
+      try {
+        const units = await api(`${BB}/units`);
+        document.getElementById('unitsTableBody').innerHTML = units.length ? units.map(u => `
+          <tr>
+            <td><strong>${esc(u.unitNumber)}</strong></td>
+            <td><span class="badge badge-danger">${esc(u.bloodType)}</span></td>
+            <td>${u.volumeMl} ml</td>
+            <td>${new Date(u.collectionDate).toLocaleDateString()}</td>
+            <td>${new Date(u.expiryDate).toLocaleDateString()}</td>
+            <td>${esc(u.storageLocation)}</td>
+            <td><span class="badge ${u.status === 'AVAILABLE' ? 'badge-success' : 'badge-warning'}">${esc(u.status)}</span></td>
+          </tr>
+        `).join('') : emptyRow(7, 'No blood units yet — record a donation first');
+      } catch (err) { showLoadError('unitsTableBody', err, 7); }
+    }
+
+    // ---------- Requests (full CRUD) ----------
+    async function loadRequests() {
+      try {
+        requests = await api(`${BB}/requests`);
+        document.getElementById('requestsTableBody').innerHTML = requests.length ? requests.map(r => `
+          <tr>
+            <td><strong>${esc(r.requestNumber)}</strong></td>
+            <td>${esc(r.patientName)}</td>
+            <td><span class="badge badge-danger">${esc(r.bloodType)}</span></td>
+            <td>${r.quantityRequested} Unit(s)</td>
+            <td><span class="badge ${r.urgency === 'EMERGENCY' ? 'badge-danger' : 'badge-warning'}">${esc(r.urgency)}</span></td>
+            <td>${esc(r.reason)}</td>
+            <td><span class="badge ${r.status === 'FULFILLED' ? 'badge-success' : 'badge-info'}">${esc(r.status)}</span></td>
+            <td style="white-space:nowrap;">
+              ${r.status === 'PENDING' ? `
+                ${smallBtn('Issue Unit', `openIssueModal(${r.id})`, 'btn-red', 'background:#059669;', 'staff admin')}
+                ${smallBtn('Edit', `openRequestModal(${r.id})`, 'btn-red', 'background:#1e40af;')}
+              ` : ''}
+              ${r.status !== 'FULFILLED' ? smallBtn('Delete', `deleteRequest(${r.id})`, 'btn-red') : '—'}
+            </td>
+          </tr>
+        `).join('') : emptyRow(8, 'No blood requests yet');
+      } catch (err) { showLoadError('requestsTableBody', err, 8); }
+    }
+
+    function openRequestModal(id) {
+      const r = id ? requests.find(x => x.id === id) : null;
+      document.getElementById('requestForm').reset();
+      document.getElementById('r-id').value = r ? r.id : '';
+      if (r) {
+        document.getElementById('r-pname').value = r.patientName;
+        document.getElementById('r-bt').value = r.bloodType;
+        document.getElementById('r-qty').value = r.quantityRequested;
+        document.getElementById('r-urgency').value = r.urgency;
+        document.getElementById('r-reqby').value = r.requestedBy || '';
+        document.getElementById('r-reason').value = r.reason || '';
+      }
+      document.getElementById('requestModalTitle').innerHTML = r
+        ? `<i class="fa-solid fa-pen"></i> Edit Request ${esc(r.requestNumber)}`
+        : '<i class="fa-solid fa-clipboard-question"></i> Create Blood Request';
+      document.getElementById('requestModal').classList.add('active');
+    }
+
+    async function saveRequest(e) {
+      e.preventDefault();
+      const id = document.getElementById('r-id').value;
+      const req = {
+        patientName: document.getElementById('r-pname').value.trim(),
+        bloodType: document.getElementById('r-bt').value,
+        quantityRequested: parseInt(document.getElementById('r-qty').value),
+        urgency: document.getElementById('r-urgency').value,
+        requestedBy: document.getElementById('r-reqby').value.trim(),
+        reason: document.getElementById('r-reason').value.trim()
+      };
+      try {
+        const saved = id ? await api(`${BB}/requests/${id}`, 'PUT', req) : await api(`${BB}/requests`, 'POST', req);
+        closeModal('requestModal');
+        loadRequests();
+        alert(`✅ Blood request ${saved.requestNumber} ${id ? 'updated' : 'created'}.`);
+      } catch (err) {
+        alert('❌ Could not save request:\n' + err.message);
+      }
+    }
+
+    async function deleteRequest(id) {
+      if (!confirm('Delete this blood request?')) return;
+      try {
+        await api(`${BB}/requests/${id}`, 'DELETE');
+        loadRequests();
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    // ---------- Issues & audit ----------
+    async function loadIssues() {
+      try {
+        const issues = await api(`${BB}/issues`);
+        document.getElementById('issuesTableBody').innerHTML = issues.length ? issues.map(i => `
+          <tr>
+            <td><strong>${esc(i.issueNumber)}</strong></td>
+            <td>REQ-#${i.requestId}</td>
+            <td><span class="badge badge-danger">${esc(i.bloodType)}</span></td>
+            <td>${i.quantity}</td>
+            <td>${esc(i.issuedBy)}</td>
+            <td>${new Date(i.issueDate).toLocaleString()}</td>
+            <td><span class="badge badge-success">${esc(i.status)}</span></td>
+          </tr>
+        `).join('') : emptyRow(7, 'No blood units issued yet');
+      } catch (err) { showLoadError('issuesTableBody', err, 7); }
+    }
+
+    async function loadTransactions() {
+      try {
+        const txs = await api(`${BB}/transactions`);
+        document.getElementById('transactionsTableBody').innerHTML = txs.length ? txs.map(t => `
+          <tr>
+            <td>#${t.id}</td>
+            <td>UNIT-#${t.bloodUnitId}</td>
+            <td><span class="badge badge-info">${esc(t.transactionType)}</span></td>
+            <td>${t.quantity}</td>
+            <td>${esc(t.referenceId || 'N/A')}</td>
+            <td>${esc(t.performedBy)}</td>
+            <td>${new Date(t.transactionDate).toLocaleString()}</td>
+          </tr>
+        `).join('') : emptyRow(7, 'No inventory history yet');
+      } catch (err) { showLoadError('transactionsTableBody', err, 7); }
+    }
+
+    // ---------- Modal helpers ----------
+    async function openDonationModal() {
+      try {
+        const list = await api(`${BB}/donors`);
+        const eligible = list.filter(d => d.status === 'ACTIVE' && d.eligibilityStatus === 'ELIGIBLE');
+        if (!eligible.length) { alert('There are no ACTIVE + ELIGIBLE donors. Register a donor first.'); return; }
+        fillSelect(document.getElementById('dn-donor-id'), eligible, d => d.id,
+          d => `${d.donorNumber} - ${d.firstName} ${d.lastName} (${d.bloodType})`, '-- Select donor --');
+        document.getElementById('donationModal').classList.add('active');
+      } catch (err) { alert('❌ ' + err.message); }
+    }
+
+    async function openTestModal() {
+      try {
+        const units = (await api(`${BB}/units`)).filter(u => u.status === 'QUARANTINED');
+        if (!units.length) { alert('No blood units are waiting for testing (QUARANTINED). Record a donation first.'); return; }
+        fillSelect(document.getElementById('t-unit-id'), units, u => u.id,
+          u => `${u.unitNumber} (${u.bloodType}) - Donation #${u.donationId}`, '-- Select blood unit --');
+        document.getElementById('t-unit-id').onchange = () => {
+          const unit = units.find(u => String(u.id) === document.getElementById('t-unit-id').value);
+          document.getElementById('t-don-id').value = unit ? unit.donationId : '';
+          if (unit) document.getElementById('t-bt').value = unit.bloodType;
+        };
+        document.getElementById('testModal').classList.add('active');
+      } catch (err) { alert('❌ ' + err.message); }
+    }
+
+    async function openIssueModal(reqId) {
+      const r = requests.find(x => x.id === reqId);
+      if (!r) return;
+      document.getElementById('issue-req-id').value = reqId;
+      document.getElementById('issue-req-info').value = `${r.requestNumber} (${r.bloodType})`;
+      try {
+        const availableUnits = await api(`${BB}/units/available`);
+        const compatibleUnits = availableUnits.filter(u => u.bloodType === r.bloodType);
+        if (compatibleUnits.length === 0) {
+          alert('No compatible AVAILABLE blood units found for ' + r.bloodType);
+          return;
+        }
+        fillSelect(document.getElementById('issue-unit-id'), compatibleUnits, u => u.id,
+          u => `${u.unitNumber} - ${u.bloodType} (${u.storageLocation})`);
+        document.getElementById('issueModal').classList.add('active');
+      } catch (err) { alert('❌ ' + err.message); }
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    // ---------- Save handlers for workflow records ----------
+    async function saveDonation(e) {
+      e.preventDefault();
+      const donation = {
+        donorId: parseInt(document.getElementById('dn-donor-id').value),
+        volumeMl: parseInt(document.getElementById('dn-vol').value),
+        donationLocation: document.getElementById('dn-loc').value,
+        screeningNotes: document.getElementById('dn-notes').value
+      };
+      try {
+        await api(`${BB}/donations`, 'POST', donation);
+        closeModal('donationModal');
+        loadDonations();
+        alert('✅ Blood donation recorded & quarantined blood unit created!');
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    async function saveTest(e) {
+      e.preventDefault();
+      const test = {
+        donationId: parseInt(document.getElementById('t-don-id').value),
+        bloodUnitId: parseInt(document.getElementById('t-unit-id').value),
+        bloodTypeResult: document.getElementById('t-bt').value,
+        hivResult: document.getElementById('t-hiv').value,
+        hepatitisBResult: document.getElementById('t-hepb').value,
+        hepatitisCResult: document.getElementById('t-hepc').value,
+        syphilisResult: document.getElementById('t-syp').value,
+        malariaResult: document.getElementById('t-mal').value,
+        testedBy: document.getElementById('t-by').value
+      };
+      try {
+        const saved = await api(`${BB}/tests`, 'POST', test);
+        closeModal('testModal');
+        loadTesting();
+        alert(`✅ Test result saved: ${saved.overallResult}.`);
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    async function confirmIssue(e) {
+      e.preventDefault();
+      const reqId = document.getElementById('issue-req-id').value;
+      const unitId = document.getElementById('issue-unit-id').value;
+      const issuedBy = document.getElementById('issue-by').value;
+      const notes = document.getElementById('issue-notes').value;
+      try {
+        await api(`${BB}/issues?requestId=${reqId}&bloodUnitId=${unitId}&issuedBy=${encodeURIComponent(issuedBy)}&notes=${encodeURIComponent(notes)}`, 'POST');
+        closeModal('issueModal');
+        loadRequests();
+        alert('✅ Blood unit issued successfully. Stock automatically updated.');
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
