@@ -7,4 +7,7 @@ import org.springframework.stereotype.Repository;
 //Tell Spring: "This is a Database Manager component"
 @Repository
 public interface OperationTheatreRepository extends JpaRepository<OperationTheatre, String> {
+// 2. Extends JpaRepository<Entity, PrimaryKeyType>
+    //    - Entity: OperationTheatre
+    //    - ID Type: String
 }
