@@ -12,6 +12,8 @@ import lombok.*;
 //Lombok shortcuts: Auto-generate Getters, Setters, Constructors & Builder
 @Getter
 @Setter
+
+// Empty constructor: new OperationTheatre()
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
