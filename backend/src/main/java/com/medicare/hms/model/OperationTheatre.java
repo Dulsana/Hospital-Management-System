@@ -8,6 +8,8 @@ import lombok.*;
 
 //Name the database table "operation_theatres"
 @Table(name = "operation_theatres")
+
+//Lombok shortcuts: Auto-generate Getters, Setters, Constructors & Builder
 @Getter
 @Setter
 @NoArgsConstructor
