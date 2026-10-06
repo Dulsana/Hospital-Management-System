@@ -31,6 +31,7 @@ public class OperationTheatre {
     @Column(nullable = false)
     private String suiteName;
 
+    // Doctor in charge (e.g., "Dr. Smith")
     private String leadSurgeon;
 
     private String currentProcedure;
