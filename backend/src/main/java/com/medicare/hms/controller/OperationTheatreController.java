@@ -21,6 +21,7 @@ public class OperationTheatreController {
     // Connection to the database tool
     private final OperationTheatreRepository otRepository;
 
+    //Connect the database automatically when the server starts
     @Autowired
     public OperationTheatreController(OperationTheatreRepository otRepository) {
         this.otRepository = otRepository;
