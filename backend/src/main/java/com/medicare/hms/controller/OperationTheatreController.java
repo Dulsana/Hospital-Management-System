@@ -30,6 +30,9 @@ public class OperationTheatreController {
     //When someone sends a GET request to "/api/ot", run this function
     @GetMapping
     public ResponseEntity<List<OperationTheatre>> getOTSchedules() {
+
+        
+        // Fetch all operation theatre rooms from DB and return them with "200 OK" status
         return ResponseEntity.ok(otRepository.findAll());
     }
 }
