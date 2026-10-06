@@ -37,6 +37,7 @@ public class OperationTheatre {
     // Surgery name (e.g., "Heart Bypass")
     private String currentProcedure;
 
+    // Room state (e.g., "AVAILABLE", "OCCUPIED", "CLEANING")
     private String status;
 
     private String scheduledTime;
