@@ -40,5 +40,6 @@ public class OperationTheatre {
     // Room state (e.g., "AVAILABLE", "OCCUPIED", "CLEANING")
     private String status;
 
+    // Time slot (e.g., "10:00 AM - 12:00 PM")
     private String scheduledTime;
 }
