@@ -10,4 +10,10 @@ public interface OperationTheatreRepository extends JpaRepository<OperationTheat
 // 2. Extends JpaRepository<Entity, PrimaryKeyType>
     //    - Entity: OperationTheatre
     //    - ID Type: String
+
+// 3. You automatically get free database methods out of the box:
+    //    - findAll()    -> SELECT * FROM operation_theatres
+    //    - findById(id) -> SELECT * FROM operation_theatres WHERE id = ?
+    //    - save(ot)     -> INSERT / UPDATE record
+    //    - deleteById(id) -> DELETE FROM operation_theatres WHERE id = ?
 }
