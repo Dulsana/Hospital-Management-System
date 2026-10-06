@@ -13,6 +13,8 @@ import java.util.List;
 
 //The web address for this code is: http://localhost:8080/api/ot
 @RequestMapping("/api/ot")
+
+//Allow websites/frontend apps (like React, Angular) to talk to this backend
 @CrossOrigin(origins = "*")
 public class OperationTheatreController {
 
