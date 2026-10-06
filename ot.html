@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operation Theatres — Medicare Hospital</title>
+  <meta name="description" content="Medicare Hospital Operation Theatre Management — live OT suite status, today's surgery schedule, and elective booking.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .page-hero { background: linear-gradient(135deg, #0f172a 0%, #78350f 50%, #d97706 100%); padding: 4rem 0 3rem; position: relative; overflow: hidden; }
+    .page-hero::after { content:''; position:absolute; right:-100px; top:-100px; width:500px; height:500px; background:radial-gradient(circle,rgba(217,119,6,0.2) 0%,transparent 70%); }
+    .page-hero-content { position: relative; z-index: 1; }
+    .page-hero-tag { display:inline-block; background:rgba(253,230,138,0.15); color:#fde68a; padding:0.35rem 1rem; border-radius:var(--radius-full); font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1rem; border:1px solid rgba(253,230,138,0.3); }
+    .page-hero h1 { color:#fff; font-size:2.4rem; margin-bottom:0.5rem; }
+    .page-hero h1 span { color:#fde68a; }
+    .page-hero p { color:rgba(255,255,255,0.7); font-size:1rem; max-width: 600px; }
+
+    /* Stats */
+    .ot-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; padding: 1.75rem 0; }
+    .ot-stat { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm); transition: var(--transition); }
+    .ot-stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .ot-stat-icon { width: 46px; height: 46px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .ot-stat-num { font-size: 1.5rem; font-weight: 800; color: var(--primary-navy); line-height: 1; }
+    .ot-stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+
+    /* OT Suite Cards */
+    .ot-suites-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+
+    .ot-suite-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .ot-suite-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    .ot-suite-header { padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .ot-suite-name { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .ot-suite-num { font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 0.2rem; }
+
+    .ot-live-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .ot-live-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .ot-status-active { background: rgba(220,38,38,0.2); color: #fca5a5; }
+    .ot-status-active .ot-live-dot { background: #fca5a5; animation: blink 1s infinite; }
+
+    .ot-status-available { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+    .ot-status-available .ot-live-dot { background: #6ee7b7; }
+
+    .ot-status-maintenance { background: rgba(100,116,139,0.2); color: #cbd5e1; }
+    .ot-status-maintenance .ot-live-dot { background: #94a3b8; }
+
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    .ot-suite-body { padding: 1.25rem 1.5rem; }
+
+    .ot-info-row { display: flex; gap: 2rem; margin-bottom: 1.1rem; }
+    .ot-info-item { display: flex; flex-direction: column; gap: 0.2rem; }
+    .ot-info-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .ot-info-value { font-size: 0.9rem; font-weight: 700; color: var(--primary-navy); }
+
+    .ot-current-op {
+      background: var(--bg-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .ot-current-op-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 0.4rem; }
+    .ot-current-op-name { font-size: 0.9rem; font-weight: 700; color: var(--primary-navy); margin-bottom: 0.25rem; }
+    .ot-current-op-surgeon { font-size: 0.82rem; color: var(--text-muted); }
+
+    .ot-progress-bar { height: 6px; background: var(--border-light); border-radius: 99px; overflow: hidden; margin-top: 0.75rem; }
+    .ot-progress-fill { height: 100%; border-radius: 99px; }
+
+    .ot-progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; }
+
+    /* Today's Schedule Table */
+    .schedule-section { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 2.5rem; }
+    .schedule-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+    .schedule-header h2 { font-size: 1.1rem; color: var(--primary-navy); display: flex; align-items: center; gap: 0.6rem; }
+
+    .schedule-table { width: 100%; border-collapse: collapse; }
+    .schedule-table th { background: var(--bg-subtle); padding: 0.85rem 1.25rem; text-align: left; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border-light); }
+    .schedule-table td { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-light); font-size: 0.88rem; color: var(--text-dark); }
+    .schedule-table tr:last-child td { border-bottom: none; }
+    .schedule-table tr:hover td { background: var(--bg-subtle); }
+
+    .sched-status { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; }
+    .sched-in-progress { background: rgba(220,38,38,0.1); color: #dc2626; }
+    .sched-completed { background: rgba(16,185,129,0.1); color: #059669; }
+    .sched-scheduled { background: rgba(30,64,175,0.1); color: var(--primary-blue); }
+    .sched-prep { background: rgba(245,158,11,0.1); color: #d97706; }
+
+    /* Booking Form */
+    .ot-booking-section { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); padding: 2rem; margin-bottom: 3rem; }
+    .ot-booking-section h2 { font-size: 1.2rem; color: var(--primary-navy); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.6rem; }
+    .ot-booking-section p { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.75rem; }
+    .ot-booking-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .ot-form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .ot-form-group label { font-size: 0.85rem; font-weight: 600; color: var(--primary-navy); }
+    .ot-form-group input, .ot-form-group select, .ot-form-group textarea { padding: 0.8rem 1rem; border: 1.5px solid var(--border-medium); border-radius: var(--radius-md); background: var(--bg-main); font-size: 0.9rem; color: var(--text-dark); }
+    .ot-form-group input:focus, .ot-form-group select:focus { outline: none; border-color: #d97706; }
+
+    @media (max-width: 1024px) { .ot-stats { grid-template-columns: repeat(3, 1fr); } .ot-suites-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .ot-stats { grid-template-columns: 1fr 1fr; } .ot-booking-grid { grid-template-columns: 1fr; } }
+  </style>
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item"><i class="fa-solid fa-phone-flip"></i><span>Channeling: <strong>0115 777 888</strong></span></div>
+        <div class="top-bar-info-item"><i class="fa-solid fa-truck-medical emergency-highlight"></i><span>Emergency: <strong class="emergency-highlight">0115 577 222</strong></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap"><i class="fa-solid fa-plus"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </a>
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="departments.html" class="nav-link">Departments</a>
+        <a href="doctors.html" class="nav-link">Find a Doctor</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
+        <a href="packages.html" class="nav-link">Packages</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <div class="page-hero-tag"><i class="fa-solid fa-hospital-user"></i> Operation Theatres</div>
+      <h1>OT Suite <span>Management</span></h1>
+      <p>Live operation theatre status, surgical timelines, surgeon allocation, and elective booking — all in one place.</p>
+    </div>
+  </section>
+
+  <div class="container">
+    <!-- Stats -->
+    <div class="ot-stats">
+      <div class="ot-stat">
+        <div class="ot-stat-icon" style="background:rgba(220,38,38,0.1);color:#dc2626;"><i class="fa-solid fa-hospital-user"></i></div>
+        <div><div class="ot-stat-num">6</div><div class="ot-stat-label">Total OT Suites</div></div>
+      </div>
+      <div class="ot-stat">
+        <div class="ot-stat-icon" style="background:rgba(217,119,6,0.1);color:#d97706;"><i class="fa-solid fa-person-shelter"></i></div>
+        <div><div class="ot-stat-num">3</div><div class="ot-stat-label">Currently Active</div></div>
+      </div>
+      <div class="ot-stat">
+        <div class="ot-stat-icon" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fa-solid fa-circle-check"></i></div>
+        <div><div class="ot-stat-num">2</div><div class="ot-stat-label">Available Now</div></div>
+      </div>
+      <div class="ot-stat">
+        <div class="ot-stat-icon" style="background:rgba(100,116,139,0.1);color:#64748b;"><i class="fa-solid fa-wrench"></i></div>
+        <div><div class="ot-stat-num">1</div><div class="ot-stat-label">Maintenance</div></div>
+      </div>
+      <div class="ot-stat">
+        <div class="ot-stat-icon" style="background:rgba(30,64,175,0.1);color:var(--primary-blue);"><i class="fa-solid fa-calendar-day"></i></div>
+        <div><div class="ot-stat-num">14</div><div class="ot-stat-label">Surgeries Today</div></div>
+      </div>
+    </div>
+
+    <!-- OT Suite Status Cards -->
+    <h2 style="font-size:1.3rem;color:var(--primary-navy);margin-bottom:1.25rem;"><i class="fa-solid fa-circle-nodes" style="color:#d97706;"></i> OT Suite Status — Live</h2>
+
+    <div class="ot-suites-grid">
+      <!-- OT 1 -->
+      <div class="ot-suite-card">
+        <div class="ot-suite-header" style="background:linear-gradient(135deg,#dc2626,#b91c1c);">
+          <div>
+            <div class="ot-suite-name">General Surgery OT — Suite 01</div>
+            <div class="ot-suite-num">Floor 2, Building A</div>
+          </div>
+          <div class="ot-live-status ot-status-active"><div class="ot-live-dot"></div> In Progress</div>
+        </div>
+        <div class="ot-suite-body">
+          <div class="ot-info-row">
+            <div class="ot-info-item"><div class="ot-info-label">Lead Surgeon</div><div class="ot-info-value">Dr. Nishantha Silva</div></div>
+            <div class="ot-info-item"><div class="ot-info-label">Anaesthetist</div><div class="ot-info-value">Dr. K. Rathnayake</div></div>
+          </div>
+          <div class="ot-current-op">
+            <div class="ot-current-op-label">Current Procedure</div>
+            <div class="ot-current-op-name">Laparoscopic Appendectomy</div>
+            <div class="ot-current-op-surgeon">Started: 10:30 AM — Est. completion: 12:30 PM</div>
+            <div class="ot-progress-bar"><div class="ot-progress-fill" style="width:65%;background:linear-gradient(90deg,#d97706,#dc2626);"></div></div>
+            <div class="ot-progress-label"><span>65% Complete</span><span>~45 min remaining</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OT 2 -->
+      <div class="ot-suite-card">
+        <div class="ot-suite-header" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);">
+          <div>
+            <div class="ot-suite-name">Cardiac Surgery OT — Suite 02</div>
+            <div class="ot-suite-num">Floor 3, Building A — Sterile Zone</div>
+          </div>
+          <div class="ot-live-status ot-status-active"><div class="ot-live-dot"></div> In Progress</div>
+        </div>
+        <div class="ot-suite-body">
+          <div class="ot-info-row">
+            <div class="ot-info-item"><div class="ot-info-label">Lead Surgeon</div><div class="ot-info-value">Dr. Anura Jayasinghe</div></div>
+            <div class="ot-info-item"><div class="ot-info-label">Perfusionist</div><div class="ot-info-value">Mr. D. Wickrama</div></div>
+          </div>
+          <div class="ot-current-op">
+            <div class="ot-current-op-label">Current Procedure</div>
+            <div class="ot-current-op-name">Coronary Artery Bypass Graft (CABG)</div>
+            <div class="ot-current-op-surgeon">Started: 08:00 AM — Est. completion: 02:00 PM</div>
+            <div class="ot-progress-bar"><div class="ot-progress-fill" style="width:50%;background:linear-gradient(90deg,#7c3aed,#4c1d95);"></div></div>
+            <div class="ot-progress-label"><span>50% Complete</span><span>~3 hrs remaining</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OT 3 -->
+      <div class="ot-suite-card">
+        <div class="ot-suite-header" style="background:linear-gradient(135deg,#059669,#047857);">
+          <div>
+            <div class="ot-suite-name">Neurosurgery OT — Suite 03</div>
+            <div class="ot-suite-num">Floor 3, Building B — Neuro Block</div>
+          </div>
+          <div class="ot-live-status ot-status-available"><div class="ot-live-dot"></div> Available</div>
+        </div>
+        <div class="ot-suite-body">
+          <div class="ot-info-row">
+            <div class="ot-info-item"><div class="ot-info-label">Next Surgeon</div><div class="ot-info-value">Dr. Sanduni Perera</div></div>
+            <div class="ot-info-item"><div class="ot-info-label">Next Procedure</div><div class="ot-info-value">2:00 PM Today</div></div>
+          </div>
+          <div class="ot-current-op" style="background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.2);">
+            <div class="ot-current-op-label" style="color:#059669;">Next Scheduled</div>
+            <div class="ot-current-op-name">Brain Tumor Resection (Glioma)</div>
+            <div class="ot-current-op-surgeon">Scheduled: 2:00 PM — Est. duration: 4 hours</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OT 4 -->
+      <div class="ot-suite-card">
+        <div class="ot-suite-header" style="background:linear-gradient(135deg,#0284c7,#0369a1);">
+          <div>
+            <div class="ot-suite-name">Orthopedic OT — Suite 04</div>
+            <div class="ot-suite-num">Floor 2, Building B — Orthopedic Wing</div>
+          </div>
+          <div class="ot-live-status ot-status-active"><div class="ot-live-dot"></div> In Progress</div>
+        </div>
+        <div class="ot-suite-body">
+          <div class="ot-info-row">
+            <div class="ot-info-item"><div class="ot-info-label">Lead Surgeon</div><div class="ot-info-value">Dr. Nishantha Silva</div></div>
+            <div class="ot-info-item"><div class="ot-info-label">Started</div><div class="ot-info-value">11:00 AM</div></div>
+          </div>
+          <div class="ot-current-op">
+            <div class="ot-current-op-label">Current Procedure</div>
+            <div class="ot-current-op-name">Total Knee Replacement (Left)</div>
+            <div class="ot-current-op-surgeon">Started: 11:00 AM — Est. completion: 1:30 PM</div>
+            <div class="ot-progress-bar"><div class="ot-progress-fill" style="width:40%;background:linear-gradient(90deg,#0284c7,#0f172a);"></div></div>
+            <div class="ot-progress-label"><span>40% Complete</span><span>~1.5 hrs remaining</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Surgery Schedule -->
+    <div class="schedule-section">
+      <div class="schedule-header">
+        <h2><i class="fa-regular fa-calendar-days" style="color:#d97706;"></i> Today's Surgery Schedule — Sep 15, 2026</h2>
+        <span style="font-size:0.82rem;color:var(--text-muted);">14 Surgeries Scheduled</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>OT Suite</th>
+              <th>Procedure</th>
+              <th>Surgeon</th>
+              <th>Patient ID</th>
+              <th>Duration</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>08:00 AM</strong></td><td>Suite 02 — Cardiac</td><td>CABG (Bypass Surgery)</td><td>Dr. Anura Jayasinghe</td><td>P-2026-1842</td><td>6 hrs</td><td><span class="sched-status sched-in-progress"><i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> In Progress</span></td></tr>
+            <tr><td><strong>09:00 AM</strong></td><td>Suite 01 — General</td><td>Cholecystectomy</td><td>Dr. P. Gunawardena</td><td>P-2026-1890</td><td>2 hrs</td><td><span class="sched-status sched-completed"><i class="fa-solid fa-check"></i> Completed</span></td></tr>
+            <tr><td><strong>10:30 AM</strong></td><td>Suite 01 — General</td><td>Laparoscopic Appendectomy</td><td>Dr. Nishantha Silva</td><td>P-2026-1905</td><td>2 hrs</td><td><span class="sched-status sched-in-progress"><i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> In Progress</span></td></tr>
+            <tr><td><strong>11:00 AM</strong></td><td>Suite 04 — Orthopedic</td><td>Total Knee Replacement</td><td>Dr. Nishantha Silva</td><td>P-2026-1876</td><td>2.5 hrs</td><td><span class="sched-status sched-in-progress"><i class="fa-solid fa-circle" style="font-size:0.5rem;"></i> In Progress</span></td></tr>
+            <tr><td><strong>01:30 PM</strong></td><td>Suite 01 — General</td><td>Hernia Repair (Inguinal)</td><td>Dr. R. Amaratunga</td><td>P-2026-1920</td><td>1.5 hrs</td><td><span class="sched-status sched-prep"><i class="fa-solid fa-clock"></i> Prep Phase</span></td></tr>
+            <tr><td><strong>02:00 PM</strong></td><td>Suite 03 — Neuro</td><td>Brain Tumor Resection</td><td>Dr. Sanduni Perera</td><td>P-2026-1833</td><td>4 hrs</td><td><span class="sched-status sched-scheduled"><i class="fa-regular fa-calendar"></i> Scheduled</span></td></tr>
+            <tr><td><strong>03:00 PM</strong></td><td>Suite 04 — Orthopedic</td><td>Hip Replacement (Right)</td><td>Dr. Nishantha Silva</td><td>P-2026-1941</td><td>3 hrs</td><td><span class="sched-status sched-scheduled"><i class="fa-regular fa-calendar"></i> Scheduled</span></td></tr>
+            <tr><td><strong>04:00 PM</strong></td><td>Suite 01 — General</td><td>Colectomy (Partial)</td><td>Dr. P. Gunawardena</td><td>P-2026-1955</td><td>2.5 hrs</td><td><span class="sched-status sched-scheduled"><i class="fa-regular fa-calendar"></i> Scheduled</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Elective Booking Form -->
+    <div class="ot-booking-section">
+      <h2><i class="fa-solid fa-calendar-plus" style="color:#d97706;"></i> Request Elective Surgery Booking</h2>
+      <p>Submit a request for elective (planned) surgery scheduling. Our OT coordinator will confirm within 24 hours.</p>
+      <form onsubmit="submitOTBooking(event)">
+        <div class="ot-booking-grid">
+          <div class="ot-form-group">
+            <label>Patient Name</label>
+            <input type="text" placeholder="Full name" required>
+          </div>
+          <div class="ot-form-group">
+            <label>Patient ID / NIC</label>
+            <input type="text" placeholder="e.g. P-2026-XXXX or NIC" required>
+          </div>
+          <div class="ot-form-group">
+            <label>Contact Number</label>
+            <input type="tel" pattern="(?:0|\+94(?: |-)?)[0-9]{2}(?: |-)?[0-9]{3}(?: |-)?[0-9]{4}" title="Sri Lankan number, e.g. 0771234567 or +94 77 123 4567" placeholder="+94 7X XXX XXXX" required>
+          </div>
+          <div class="ot-form-group">
+            <label>Type of Surgery</label>
+            <select required>
+              <option value="">-- Select Type --</option>
+              <option>General Surgery</option>
+              <option>Cardiac Surgery</option>
+              <option>Neurosurgery</option>
+              <option>Orthopedic Surgery</option>
+              <option>Gynecological Surgery</option>
+              <option>Urological Surgery</option>
+              <option>Other (Specify)</option>
+            </select>
+          </div>
+          <div class="ot-form-group">
+            <label>Referring Doctor</label>
+            <select required>
+              <option value="">-- Select Doctor --</option>
+              <option>Dr. Anura Jayasinghe — Cardiology</option>
+              <option>Dr. Sanduni Perera — Neurology</option>
+              <option>Dr. Nishantha Silva — Orthopedics</option>
+              <option>Dr. Priyantha Gunawardena — Gastroenterology</option>
+            </select>
+          </div>
+          <div class="ot-form-group">
+            <label>Preferred Date</label>
+            <input type="date" required>
+          </div>
+        </div>
+        <div class="ot-form-group" style="margin-top:1rem;">
+          <label>Procedure Description / Notes</label>
+          <textarea rows="3" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-medium);border-radius:var(--radius-md);background:var(--bg-main);font-size:0.9rem;resize:vertical;" placeholder="Briefly describe the planned procedure and any special requirements..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1.25rem;">
+          <i class="fa-solid fa-calendar-check"></i> Submit Booking Request
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 Medicare Hospital Management System. All Rights Reserved.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function submitOTBooking(e) {
+      e.preventDefault();
+      const ref = 'OT-REQ-' + Math.floor(Math.random() * 9000 + 1000);
+      alert(`✅ OT Booking Request Submitted!\nReference: ${ref}\nOur OT coordinator will contact you within 24 hours to confirm the schedule.`);
+    }
+
+    document.getElementById('mobileToggle').addEventListener('click', () => document.getElementById('navMenu').classList.toggle('active'));
+  </script>
+</body>
+</html>
