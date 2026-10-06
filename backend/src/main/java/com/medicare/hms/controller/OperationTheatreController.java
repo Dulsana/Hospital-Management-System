@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+//Tell Spring: "This class handles web/API requests and returns JSON data"
 @RestController
 @RequestMapping("/api/ot")
 @CrossOrigin(origins = "*")
