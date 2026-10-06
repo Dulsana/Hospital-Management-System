@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Scheduling & Roster Management — Medicare Hospital</title>
+  <meta name="description" content="Medicare Hospital Doctor Scheduling & Roster Management System — Complete CRUD, Conflict Detection, Shift Roster, Consultation Slots & Leave Management.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .page-hero { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%); padding: 3rem 0 2rem; position: relative; overflow: hidden; }
+    .page-hero::after { content:''; position:absolute; right:-100px; top:-100px; width:500px; height:500px; background:radial-gradient(circle,rgba(59,130,246,0.2) 0%,transparent 70%); }
+    .page-hero-content { position: relative; z-index: 1; }
+    .page-hero-tag { display:inline-block; background:rgba(191,219,254,0.15); color:#bfdbfe; padding:0.35rem 1rem; border-radius:var(--radius-full); font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.75rem; border:1px solid rgba(191,219,254,0.3); }
+    .page-hero h1 { color:#fff; font-size:2.2rem; margin-bottom:0.3rem; }
+    .page-hero h1 span { color:#93c5fd; }
+    .page-hero p { color:rgba(255,255,255,0.7); font-size:0.95rem; max-width:650px; }
+
+    /* Module Navigation Tabs */
+    .ds-nav-tabs { display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.75rem 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-light); }
+    .ds-tab-btn { background: var(--bg-surface); border: 1px solid var(--border-light); color: var(--text-dark); padding: 0.65rem 1.2rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.88rem; cursor: pointer; white-space: nowrap; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }
+    .ds-tab-btn:hover { background: var(--bg-main); border-color: var(--primary-blue); color: var(--primary-blue); }
+    .ds-tab-btn.active { background: var(--primary-blue); color: #fff; border-color: var(--primary-blue); box-shadow: 0 4px 12px rgba(30,64,175,0.3); }
+
+    /* Stats Dashboard */
+    .ds-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .ds-stat { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm); }
+    .ds-stat-icon { width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .ds-stat-num { font-size: 1.6rem; font-weight: 800; color: var(--primary-navy); line-height: 1; }
+    .ds-stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+
+    /* Panels & Tables */
+    .ds-panel { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem; }
+    .ds-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem; }
+    .ds-panel-title { font-size: 1.25rem; font-weight: 700; color: var(--primary-navy); display: flex; align-items: center; gap: 0.6rem; }
+    .ds-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; }
+    .data-table th { background: var(--bg-main); padding: 0.85rem 1rem; font-weight: 700; color: var(--primary-navy); border-bottom: 2px solid var(--border-medium); }
+    .data-table td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-dark); vertical-align: middle; }
+    .data-table tr:hover { background: rgba(241,245,249,0.6); }
+
+    .badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 700; }
+    .badge-success { background: rgba(16,185,129,0.1); color: #059669; }
+    .badge-warning { background: rgba(245,158,11,0.1); color: #d97706; }
+    .badge-danger { background: rgba(220,38,38,0.1); color: #dc2626; }
+    .badge-info { background: rgba(59,130,246,0.1); color: #2563eb; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
+    .modal-overlay.active { display: flex; }
+    .modal-card { background: #fff; width: 100%; max-width: 600px; border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-xl); position: relative; max-height: 90vh; overflow-y: auto; }
+    .modal-close { position: absolute; right: 1.25rem; top: 1.25rem; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); border: none; background: none; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-navy); margin-bottom: 0.35rem; }
+    .form-control { width: 100%; padding: 0.75rem 0.9rem; border: 1.5px solid var(--border-medium); border-radius: var(--radius-md); font-size: 0.9rem; }
+    .form-control:focus { outline: none; border-color: var(--primary-blue); }
+
+    .btn-blue { background: var(--primary-blue); color: #fff; border: none; padding: 0.65rem 1.25rem; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; transition: var(--transition); }
+    .btn-blue:hover { background: #1d4ed8; }
+  </style>
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item"><i class="fa-solid fa-user-doctor"></i><span>Doctor Scheduling Desk: <strong>0115 777 888</strong></span></div>
+        <div class="top-bar-info-item"><i class="fa-solid fa-truck-medical emergency-highlight"></i><span>Emergency Duty: <strong class="emergency-highlight">0115 577 222</strong></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap"><i class="fa-solid fa-plus"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </a>
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="departments.html" class="nav-link">Departments</a>
+        <a href="doctors.html" class="nav-link">Find a Doctor</a>
+        <a href="doctor-scheduling.html" class="nav-link active">Doctor Scheduling</a>
+        <a href="appointments.html" class="nav-link">Appointments</a>
+        <a href="pharmacy.html" class="nav-link">Pharmacy</a>
+        <a href="bloodbank.html" class="nav-link">Blood Bank</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <div class="page-hero-tag"><i class="fa-solid fa-calendar-days"></i> Doctor Roster &amp; Schedule Management</div>
+      <h1>Doctor Scheduling <span>&amp; Rostering</span></h1>
+      <p>Automated shift allocation, Real-time schedule conflict prevention, Doctor availability tracking, Consultation slot generation, and Leave management.</p>
+    </div>
+  </section>
+
+  <div class="container" style="margin-top: 1.5rem;">
+    <!-- Navigation Tabs -->
+    <div class="ds-nav-tabs">
+      <button class="ds-tab-btn active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
+      <button class="ds-tab-btn" onclick="switchTab('specializations')"><i class="fa-solid fa-stethoscope"></i> Specializations</button>
+      <button class="ds-tab-btn" onclick="switchTab('availability')"><i class="fa-solid fa-clock"></i> Doctor Availability</button>
+      <button class="ds-tab-btn" onclick="switchTab('schedules')"><i class="fa-solid fa-calendar-plus"></i> Work Schedules</button>
+      <button class="ds-tab-btn" onclick="switchTab('shifts')"><i class="fa-solid fa-layer-group"></i> Shifts</button>
+      <button class="ds-tab-btn" onclick="switchTab('roster')"><i class="fa-solid fa-users-gear"></i> Shift Roster</button>
+      <button class="ds-tab-btn" onclick="switchTab('slots')"><i class="fa-solid fa-list-check"></i> Consultation Slots</button>
+      <button class="ds-tab-btn" onclick="switchTab('leave')"><i class="fa-solid fa-user-slash"></i> Doctor Leave</button>
+    </div>
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content">
+      <div class="ds-stats">
+        <div class="ds-stat">
+          <div class="ds-stat-icon" style="background:rgba(30,64,175,0.1);color:#1e40af;"><i class="fa-solid fa-user-doctor"></i></div>
+          <div><div class="ds-stat-num" id="stat-doctors">0</div><div class="ds-stat-label">Total Active Doctors</div></div>
+        </div>
+        <div class="ds-stat">
+          <div class="ds-stat-icon" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fa-solid fa-calendar-check"></i></div>
+          <div><div class="ds-stat-num" id="stat-schedules">0</div><div class="ds-stat-label">Today's Doctor Schedules</div></div>
+        </div>
+        <div class="ds-stat">
+          <div class="ds-stat-icon" style="background:rgba(245,158,11,0.1);color:#d97706;"><i class="fa-solid fa-user-slash"></i></div>
+          <div><div class="ds-stat-num" id="stat-leave">0</div><div class="ds-stat-label">Doctors On Leave Today</div></div>
+        </div>
+        <div class="ds-stat">
+          <div class="ds-stat-icon" style="background:rgba(59,130,246,0.1);color:#2563eb;"><i class="fa-solid fa-check-double"></i></div>
+          <div><div class="ds-stat-num" id="stat-slots">0</div><div class="ds-stat-label">Available OPD Slots</div></div>
+        </div>
+      </div>
+
+      <div class="ds-panel">
+        <div class="ds-panel-header">
+          <div class="ds-panel-title"><i class="fa-solid fa-calendar-week" style="color:var(--primary-blue);"></i> Active Doctor Rosters Overview</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Roster ID</th>
+                <th>Doctor</th>
+                <th>Shift</th>
+                <th>Date</th>
+                <th>Room</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dashRosterBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SPECIALIZATIONS -->
+    <div id="tab-specializations" class="tab-content" style="display:none;">
+      <div class="ds-panel">
+        <div class="ds-panel-header">
+          <div class="ds-panel-title"><i class="fa-solid fa-stethoscope"></i> Medical Specializations</div>
+          <button class="btn-blue" onclick="openSpecModal()" data-roles="admin"><i class="fa-solid fa-plus"></i> Add Specialization</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>ID</th><th>Specialization Name</th><th>Description</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="specTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: AVAILABILITY -->
+    <div id="tab-availability" class="tab-content" style="display:none;">
+      <div class="ds-panel">
+        <div class="ds-panel-header">
+          <div class="ds-panel-title"><i class="fa-solid fa-clock"></i> Weekly Doctor Availability</div>
+          <button class="btn-blue" onclick="openAvailModal()"><i class="fa-solid fa-plus"></i> Set Doctor Availability</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Doctor</th><th>Day of Week</th><th>Start Time</th><th>End Time</th><th>Status</th><th>Notes</th><th>Action</th></tr>
+          </thead>
+          <tbody id="availTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: SCHEDULES -->
+    <div id="tab-schedules" class="tab-content" style="display:none;">
+      <div class="ds-panel">
+        <div class="ds-panel-header">
+          <div class="ds-panel-title"><i class="fa-solid fa-calendar-plus"></i> Doctor Work Schedules</div>
+          <button class="btn-blue" onclick="openSchedModal()" data-roles="admin"><i class="fa-solid fa-plus"></i> Create Work Schedule</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Schedule ID</th><th>Doctor</th><th>Date</th><th>Start Time</th><th>End Time</th><th>Type</th><th>Room</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="schedTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 5: SHIFTS -->
+    <div id="tab-shifts" class="tab-content" style="display:none;">
+      <div class="ds-panel">
+        <div class="ds-panel-header">
+          <div class="ds-panel-title"><i class="fa-solid fa-layer-group"></i> Hospital Shift Configuration</div>
+          <button class="btn-blue" onclick="openShiftModal()" data-roles="admin"><i class="fa-solid fa-plus"></i> Add Shift</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Shift ID</th><th>Shift Name</th><th>Start Time</th><th>End Time</th><th>Shift Type</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="shiftTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 6: ROSTER -->
+    <div id="tab-roster" class="tab-content" style="display:none;">
+      <div class="ds-panel">
+        <div class="ds-panel-header">
+          <div class="ds-panel-title"><i class="fa-solid fa-users-gear"></i> Weekly Doctor Roster</div>
+          <button class="btn-blue" onclick="openRosterModal()" data-roles="admin"><i class="fa-solid fa-plus"></i> Assign Roster Shift</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Roster ID</th><th>Doctor</th><th>Shift</th><th>Date</th><th>Room</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="rosterTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 7: SLOTS -->
+    <div id="tab-slots" class="tab-content" style="display:none;">
+      <div class="ds-panel">
+        <div class="ds-panel-header">
+          <div class="ds-panel-title"><i class="fa-solid fa-list-check"></i> Generated Consultation Slots</div>
+        </div>
+        <div class="form-grid-2" style="margin-bottom:1rem;">
+          <div class="form-group"><label>Doctor</label><select id="slot-doc-id" class="form-control doctor-select"></select></div>
+          <div class="form-group"><label>Date</label><input type="date" id="slot-date" class="form-control"></div>
+        </div>
+        <button class="btn-blue" style="margin-bottom:1rem;" onclick="loadConsultationSlots()"><i class="fa-solid fa-magnifying-glass"></i> Find Slots</button>
+        <table class="data-table">
+          <thead>
+            <tr><th>Slot ID</th><th>Doctor</th><th>Time</th><th>Duration</th><th>Room</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="slotsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 8: LEAVE -->
+    <div id="tab-leave" class="tab-content" style="display:none;">
+      <div class="ds-panel">
+        <div class="ds-panel-header">
+          <div class="ds-panel-title"><i class="fa-solid fa-user-slash"></i> Doctor Leave Management</div>
+          <button class="btn-blue" onclick="openLeaveModal()"><i class="fa-solid fa-plus"></i> Apply Doctor Leave</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Leave ID</th><th>Doctor</th><th>Type</th><th>Start Date</th><th>End Date</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="leaveTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD SPECIALIZATION -->
+  <div class="modal-overlay" id="specModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('specModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);" id="specModalTitle"><i class="fa-solid fa-stethoscope"></i> Add Specialization</h3>
+      <form onsubmit="saveSpec(event)">
+        <input type="hidden" id="sp-id">
+        <div class="form-group"><label>Specialization Name</label><input type="text" id="sp-name" class="form-control" required></div>
+        <div class="form-group"><label>Description</label><input type="text" id="sp-desc" class="form-control"></div>
+        <button type="submit" class="btn-blue" style="width:100%;margin-top:0.5rem;">Save Specialization</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD AVAILABILITY -->
+  <div class="modal-overlay" id="availModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('availModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);" id="availModalTitle"><i class="fa-solid fa-clock"></i> Set Doctor Availability</h3>
+      <form onsubmit="saveAvail(event)">
+        <input type="hidden" id="av-id">
+        <div class="form-group"><label>Doctor</label><select id="av-doc-id" class="form-control doctor-select" required></select></div>
+        <div class="form-group">
+          <label>Day of Week</label>
+          <select id="av-day" class="form-control" required>
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+            <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+          </select>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group"><label>Start Time</label><input type="time" id="av-start" class="form-control" required></div>
+          <div class="form-group"><label>End Time</label><input type="time" id="av-end" class="form-control" required></div>
+        </div>
+        <button type="submit" class="btn-blue" style="width:100%;margin-top:0.5rem;">Save Availability</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD SCHEDULE -->
+  <div class="modal-overlay" id="schedModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('schedModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);" id="schedModalTitle"><i class="fa-solid fa-calendar-plus"></i> Create Work Schedule</h3>
+      <form onsubmit="saveSched(event)">
+        <input type="hidden" id="sc-id">
+        <div class="form-group"><label>Doctor</label><select id="sc-doc-id" class="form-control doctor-select" required></select></div>
+        <div class="form-group"><label>Schedule Date</label><input type="date" id="sc-date" class="form-control" required></div>
+        <div class="form-grid-2">
+          <div class="form-group"><label>Start Time</label><input type="time" id="sc-start" class="form-control" required></div>
+          <div class="form-group"><label>End Time</label><input type="time" id="sc-end" class="form-control" required></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group"><label>Room Number</label><input type="text" id="sc-room" class="form-control" value="Room 101" required></div>
+          <div class="form-group">
+            <label>Schedule Type</label>
+            <select id="sc-type" class="form-control"><option>CONSULTATION</option><option>SURGERY</option><option>WARD_ROUND</option><option>ON_CALL</option></select>
+          </div>
+        </div>
+        <p id="sc-lock-note" style="display:none;font-size:0.8rem;color:var(--text-muted);">Doctor, date and times cannot be changed because consultation slots were created from them. Cancel or delete this schedule and create a new one instead.</p>
+        <button type="submit" class="btn-blue" style="width:100%;margin-top:0.5rem;">Create Schedule &amp; Slots</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD SHIFT -->
+  <div class="modal-overlay" id="shiftModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('shiftModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);" id="shiftModalTitle"><i class="fa-solid fa-layer-group"></i> Add Hospital Shift</h3>
+      <form onsubmit="saveShift(event)">
+        <input type="hidden" id="sh-id">
+        <div class="form-group"><label>Shift Name</label><input type="text" id="sh-name" class="form-control" required></div>
+        <div class="form-grid-2">
+          <div class="form-group"><label>Start Time</label><input type="time" id="sh-start" class="form-control" required></div>
+          <div class="form-group"><label>End Time</label><input type="time" id="sh-end" class="form-control" required></div>
+        </div>
+        <div class="form-group">
+          <label>Shift Type</label>
+          <select id="sh-type" class="form-control">
+            <option>MORNING</option><option>AFTERNOON</option><option>NIGHT</option><option>ON_CALL</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-blue" style="width:100%;margin-top:0.5rem;">Save Shift</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD ROSTER -->
+  <div class="modal-overlay" id="rosterModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('rosterModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);" id="rosterModalTitle"><i class="fa-solid fa-users-gear"></i> Assign Roster Shift</h3>
+      <form onsubmit="saveRoster(event)">
+        <input type="hidden" id="ros-id">
+        <div class="form-group"><label>Doctor</label><select id="ros-doc-id" class="form-control doctor-select" required></select></div>
+        <div class="form-group"><label>Shift</label><select id="ros-shift-id" class="form-control" required></select></div>
+        <div class="form-group"><label>Roster Date</label><input type="date" id="ros-date" class="form-control" required></div>
+        <div class="form-group"><label>Room Number</label><input type="text" id="ros-room" class="form-control" value="Room 101"></div>
+        <button type="submit" class="btn-blue" style="width:100%;margin-top:0.5rem;">Save Roster Shift</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: APPLY LEAVE -->
+  <div class="modal-overlay" id="leaveModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('leaveModal')">&times;</button>
+      <h3 style="margin-bottom:1rem;color:var(--primary-navy);" id="leaveModalTitle"><i class="fa-solid fa-user-slash"></i> Apply Doctor Leave</h3>
+      <form onsubmit="saveLeave(event)">
+        <input type="hidden" id="lv-id">
+        <div class="form-group"><label>Doctor</label><select id="lv-doc-id" class="form-control doctor-select" required></select></div>
+        <div class="form-group">
+          <label>Leave Type</label>
+          <select id="lv-type" class="form-control"><option>ANNUAL</option><option>MEDICAL</option><option>EMERGENCY</option><option>PERSONAL</option></select>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group"><label>Start Date</label><input type="date" id="lv-sdate" class="form-control" required></div>
+          <div class="form-group"><label>End Date</label><input type="date" id="lv-edate" class="form-control" required></div>
+        </div>
+        <div class="form-group"><label>Reason</label><input type="text" id="lv-reason" class="form-control" placeholder="e.g. Annual Vacation" required></div>
+        <button type="submit" class="btn-blue" style="width:100%;margin-top:0.5rem;">Submit Leave Request</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=20261004-2"></script>
+  <script>
+    // All scheduling data comes from /api/doctor-scheduling/... (see DoctorSchedulingController.java)
+    const DS = '/doctor-scheduling';
+    let doctors = [], shifts = [];
+    let specs = [], avails = [], scheds = [], rosters = [], leaves = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadLookups();
+      loadDashboard();
+    });
+
+    // Doctors and shifts are needed by several dropdowns and tables
+    async function loadLookups() {
+      try {
+        [doctors, shifts] = await Promise.all([api('/doctors'), api(`${DS}/shifts`)]);
+        document.querySelectorAll('select.doctor-select').forEach(sel =>
+          fillSelect(sel, doctors, d => d.id, d => `${d.name} (#${d.id})`, '-- Select doctor --'));
+        fillSelect(document.getElementById('ros-shift-id'), shifts, s => s.id, s => `${s.shiftName} (${s.startTime}-${s.endTime})`, '-- Select shift --');
+        document.getElementById('slot-date').value = new Date().toISOString().split('T')[0];
+      } catch (err) {
+        alert('❌ Could not load doctors/shifts:\n' + err.message);
+      }
+    }
+
+    const docName = id => { const d = doctors.find(x => x.id === id); return d ? esc(d.name) : `Doctor #${id}`; };
+    const shiftName = id => { const s = shifts.find(x => x.id === id); return s ? esc(s.shiftName) : `Shift #${id}`; };
+
+    // roles (optional) = who may see the button; doctors manage only their availability and leave
+    const editBtn = (onclick, roles) => `<button onclick="${onclick}" ${roles ? `data-roles="${roles}"` : ''} class="btn-blue" style="padding:0.25rem 0.5rem;font-size:0.75rem;margin-right:4px;"><i class="fa-solid fa-pen"></i> Edit</button>`;
+    const deleteBtn = (onclick, roles) => `<button onclick="${onclick}" ${roles ? `data-roles="${roles}"` : ''} style="background:#ef4444;color:white;border:none;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.75rem;cursor:pointer;"><i class="fa-solid fa-trash"></i> Delete</button>`;
+
+    function tableError(tbodyId, err, cols) {
+      document.getElementById(tbodyId).innerHTML =
+        `<tr><td colspan="${cols}" style="color:#dc2626;text-align:center;padding:1rem;">${esc(err.message)}</td></tr>`;
+    }
+    const emptyRow = (cols, text) => `<tr><td colspan="${cols}" style="text-align:center;padding:1rem;color:var(--text-muted);">${text}</td></tr>`;
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.ds-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById('tab-' + tabName).style.display = 'block';
+      event.currentTarget.classList.add('active');
+
+      const loaders = {
+        dashboard: loadDashboard, specializations: loadSpecializations, availability: loadAvailability,
+        schedules: loadSchedules, shifts: loadShifts, roster: loadRoster, slots: loadConsultationSlots, leave: loadLeave
+      };
+      loaders[tabName]();
+    }
+
+    async function loadDashboard() {
+      try {
+        const data = await api(`${DS}/dashboard`);
+        document.getElementById('stat-doctors').innerText = data.totalDoctors;
+        document.getElementById('stat-schedules').innerText = data.todaySchedules;
+        document.getElementById('stat-leave').innerText = data.onLeaveToday;
+        document.getElementById('stat-slots').innerText = data.availableSlots;
+
+        rosters = await api(`${DS}/rosters`);
+        document.getElementById('dashRosterBody').innerHTML = rosters.length ? rosters.map(r => `
+          <tr>
+            <td>#${r.id}</td>
+            <td>${docName(r.doctorId)}</td>
+            <td>${shiftName(r.shiftId)}</td>
+            <td>${esc(r.rosterDate)}</td>
+            <td>${esc(r.roomNumber || '—')}</td>
+            <td><span class="badge badge-success">${esc(r.status)}</span></td>
+          </tr>
+        `).join('') : emptyRow(6, 'No roster entries yet');
+      } catch (err) { tableError('dashRosterBody', err, 6); }
+    }
+
+    // ---------- Specializations ----------
+    async function loadSpecializations() {
+      try {
+        specs = await api(`${DS}/specializations`);
+        document.getElementById('specTableBody').innerHTML = specs.length ? specs.map(s => `
+          <tr>
+            <td>#${s.id}</td>
+            <td><strong>${esc(s.name)}</strong></td>
+            <td>${esc(s.description)}</td>
+            <td><span class="badge badge-success">${esc(s.status)}</span></td>
+            <td style="white-space:nowrap;">${editBtn(`openSpecModal(${s.id})`, 'admin')}${deleteBtn(`deleteSpec(${s.id})`, 'admin')}</td>
+          </tr>
+        `).join('') : emptyRow(5, 'No specializations yet');
+      } catch (err) { tableError('specTableBody', err, 5); }
+    }
+
+    // ---------- Availability ----------
+    async function loadAvailability() {
+      try {
+        avails = await api(`${DS}/availability`);
+        document.getElementById('availTableBody').innerHTML = avails.length ? avails.map(a => `
+          <tr>
+            <td>${docName(a.doctorId)}</td>
+            <td><strong>${esc(a.dayOfWeek)}</strong></td>
+            <td>${esc(a.startTime)}</td>
+            <td>${esc(a.endTime)}</td>
+            <td><span class="badge badge-info">${esc(a.availabilityStatus)}</span></td>
+            <td>${esc(a.notes || '—')}</td>
+            <td style="white-space:nowrap;">${editBtn(`openAvailModal(${a.id})`)}${deleteBtn(`deleteAvail(${a.id})`)}</td>
+          </tr>
+        `).join('') : emptyRow(7, 'No availability records yet');
+      } catch (err) { tableError('availTableBody', err, 7); }
+    }
+
+    // ---------- Work schedules ----------
+    async function loadSchedules() {
+      try {
+        scheds = await api(`${DS}/schedules`);
+        document.getElementById('schedTableBody').innerHTML = scheds.length ? scheds.map(s => `
+          <tr>
+            <td>#${s.id}</td>
+            <td>${docName(s.doctorId)}</td>
+            <td>${esc(s.scheduleDate)}</td>
+            <td>${esc(s.startTime)}</td>
+            <td>${esc(s.endTime)}</td>
+            <td><span class="badge badge-info">${esc(s.scheduleType)}</span></td>
+            <td>${esc(s.roomNumber)}</td>
+            <td><span class="badge ${s.status === 'ACTIVE' ? 'badge-success' : 'badge-danger'}">${esc(s.status)}</span></td>
+            <td style="white-space:nowrap;">
+              ${s.status === 'ACTIVE' ? editBtn(`openSchedModal(${s.id})`, 'admin') : ''}
+              ${s.status === 'ACTIVE' ? `<button onclick="cancelSched(${s.id})" data-roles="admin" style="background:#f59e0b;color:white;border:none;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.75rem;cursor:pointer;margin-right:4px;"><i class="fa-solid fa-ban"></i> Cancel</button>` : ''}
+              ${deleteBtn(`deleteSched(${s.id})`, 'admin')}
+            </td>
+          </tr>
+        `).join('') : emptyRow(9, 'No work schedules yet');
+      } catch (err) { tableError('schedTableBody', err, 9); }
+    }
+
+    // ---------- Shifts ----------
+    async function loadShifts() {
+      try {
+        shifts = await api(`${DS}/shifts`);
+        fillSelect(document.getElementById('ros-shift-id'), shifts, s => s.id, s => `${s.shiftName} (${s.startTime}-${s.endTime})`, '-- Select shift --');
+        document.getElementById('shiftTableBody').innerHTML = shifts.length ? shifts.map(s => `
+          <tr>
+            <td>#${s.id}</td>
+            <td><strong>${esc(s.shiftName)}</strong></td>
+            <td>${esc(s.startTime)}</td>
+            <td>${esc(s.endTime)}</td>
+            <td><span class="badge badge-warning">${esc(s.shiftType)}</span></td>
+            <td><span class="badge badge-success">${esc(s.status)}</span></td>
+            <td style="white-space:nowrap;">${editBtn(`openShiftModal(${s.id})`, 'admin')}${deleteBtn(`deleteShift(${s.id})`, 'admin')}</td>
+          </tr>
+        `).join('') : emptyRow(7, 'No shifts yet');
+      } catch (err) { tableError('shiftTableBody', err, 7); }
+    }
+
+    // ---------- Roster ----------
+    async function loadRoster() {
+      try {
+        rosters = await api(`${DS}/rosters`);
+        document.getElementById('rosterTableBody').innerHTML = rosters.length ? rosters.map(r => `
+          <tr>
+            <td>#${r.id}</td>
+            <td>${docName(r.doctorId)}</td>
+            <td>${shiftName(r.shiftId)}</td>
+            <td>${esc(r.rosterDate)}</td>
+            <td>${esc(r.roomNumber || '—')}</td>
+            <td><span class="badge badge-success">${esc(r.status)}</span></td>
+            <td style="white-space:nowrap;">${editBtn(`openRosterModal(${r.id})`, 'admin')}${deleteBtn(`deleteRoster(${r.id})`, 'admin')}</td>
+          </tr>
+        `).join('') : emptyRow(7, 'No roster entries yet');
+      } catch (err) { tableError('rosterTableBody', err, 7); }
+    }
+
+    // ---------- Consultation slots ----------
+    async function loadConsultationSlots() {
+      const docId = document.getElementById('slot-doc-id').value;
+      const date = document.getElementById('slot-date').value;
+      if (!docId || !date) {
+        document.getElementById('slotsTableBody').innerHTML = emptyRow(7, 'Select a doctor and date, then click Find Slots');
+        return;
+      }
+      try {
+        const slots = await api(`${DS}/slots?doctorId=${docId}&date=${date}`);
+        document.getElementById('slotsTableBody').innerHTML = slots.length ? slots.map(s => `
+          <tr>
+            <td>#${s.id}</td>
+            <td>${docName(s.doctorId)}</td>
+            <td><strong>${esc(s.startTime)} - ${esc(s.endTime)}</strong></td>
+            <td>${s.durationMinutes} mins</td>
+            <td>${esc(s.roomNumber)}</td>
+            <td><span class="badge ${s.status === 'AVAILABLE' ? 'badge-success' : 'badge-danger'}">${esc(s.status)}</span></td>
+            <td>
+              ${s.status === 'AVAILABLE' ? `<button onclick="bookSlot(${s.id})" class="btn-blue" style="padding:0.25rem 0.5rem;font-size:0.75rem;">Book Slot</button>` : '—'}
+            </td>
+          </tr>
+        `).join('') : emptyRow(7, 'No slots for this doctor on this date. Create a work schedule first.');
+      } catch (err) { tableError('slotsTableBody', err, 7); }
+    }
+
+    async function bookSlot(slotId) {
+      try {
+        await api(`${DS}/slots/${slotId}/book`, 'POST');
+        loadConsultationSlots();
+        alert('✅ Consultation slot booked successfully!');
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    // ---------- Leave ----------
+    async function loadLeave() {
+      try {
+        leaves = await api(`${DS}/leave`);
+        document.getElementById('leaveTableBody').innerHTML = leaves.length ? leaves.map(l => `
+          <tr>
+            <td>#${l.id}</td>
+            <td>${docName(l.doctorId)}</td>
+            <td><span class="badge badge-warning">${esc(l.leaveType)}</span></td>
+            <td>${esc(l.startDate)}</td>
+            <td>${esc(l.endDate)}</td>
+            <td>${esc(l.reason)}</td>
+            <td><span class="badge ${l.status === 'APPROVED' ? 'badge-success' : (l.status === 'REJECTED' ? 'badge-danger' : 'badge-info')}">${esc(l.status)}</span></td>
+            <td style="white-space:nowrap;">
+              ${l.status === 'PENDING' ? `
+                <button onclick="setLeaveStatus(${l.id}, 'APPROVED')" data-roles="admin" class="btn-blue" style="padding:0.25rem 0.5rem;font-size:0.75rem;margin-right:4px;background:#059669;">Approve</button>
+                <button onclick="setLeaveStatus(${l.id}, 'REJECTED')" data-roles="admin" class="btn-blue" style="padding:0.25rem 0.5rem;font-size:0.75rem;margin-right:4px;background:#f59e0b;">Reject</button>
+                ${editBtn(`openLeaveModal(${l.id})`)}` : ''}
+              ${deleteBtn(`deleteLeave(${l.id})`, 'admin')}
+            </td>
+          </tr>
+        `).join('') : emptyRow(8, 'No leave requests yet');
+      } catch (err) { tableError('leaveTableBody', err, 8); }
+    }
+
+    async function setLeaveStatus(id, status) {
+      try {
+        await api(`${DS}/leave/${id}/status?status=${status}&approvedBy=Admin`, 'PUT');
+        loadLeave();
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    // ---------- Delete / cancel ----------
+    async function removeRecord(question, path, reload) {
+      if (!confirm(question)) return;
+      try {
+        await api(path, 'DELETE');
+        reload();
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+    const deleteSpec = id => removeRecord('Delete this specialization?', `${DS}/specializations/${id}`, loadSpecializations);
+    const deleteAvail = id => removeRecord('Delete this availability record?', `${DS}/availability/${id}`, loadAvailability);
+    const deleteSched = id => removeRecord('Delete this work schedule and its consultation slots?', `${DS}/schedules/${id}`, loadSchedules);
+    const deleteShift = id => removeRecord('Delete this shift?', `${DS}/shifts/${id}`, loadShifts);
+    const deleteRoster = id => removeRecord('Delete this roster entry?', `${DS}/rosters/${id}`, loadRoster);
+    const deleteLeave = id => removeRecord('Delete this leave request?', `${DS}/leave/${id}`, loadLeave);
+
+    async function cancelSched(id) {
+      if (!confirm('Cancel this work schedule? Its open consultation slots will be cancelled too.')) return;
+      try {
+        await api(`${DS}/schedules/${id}/cancel`, 'PUT');
+        loadSchedules();
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    // ---------- Modals (same form for Add and Edit) ----------
+    function setModalMode(modalId, titleId, record, addTitle, editTitle) {
+      document.querySelector(`#${modalId} form`).reset();
+      document.getElementById(titleId).innerHTML = record ? editTitle : addTitle;
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function openSpecModal(id) {
+      const s = id ? specs.find(x => x.id === id) : null;
+      setModalMode('specModal', 'specModalTitle', s,
+        '<i class="fa-solid fa-stethoscope"></i> Add Specialization', `<i class="fa-solid fa-pen"></i> Edit Specialization #${id}`);
+      document.getElementById('sp-id').value = s ? s.id : '';
+      if (s) {
+        document.getElementById('sp-name').value = s.name;
+        document.getElementById('sp-desc').value = s.description || '';
+      }
+    }
+
+    function openAvailModal(id) {
+      const a = id ? avails.find(x => x.id === id) : null;
+      setModalMode('availModal', 'availModalTitle', a,
+        '<i class="fa-solid fa-clock"></i> Set Doctor Availability', `<i class="fa-solid fa-pen"></i> Edit Availability #${id}`);
+      document.getElementById('av-id').value = a ? a.id : '';
+      if (a) {
+        document.getElementById('av-doc-id').value = a.doctorId;
+        document.getElementById('av-day').value = a.dayOfWeek;
+        document.getElementById('av-start').value = a.startTime;
+        document.getElementById('av-end').value = a.endTime;
+      }
+    }
+
+    function openSchedModal(id) {
+      const s = id ? scheds.find(x => x.id === id) : null;
+      setModalMode('schedModal', 'schedModalTitle', s,
+        '<i class="fa-solid fa-calendar-plus"></i> Create Work Schedule', `<i class="fa-solid fa-pen"></i> Edit Schedule #${id}`);
+      document.getElementById('sc-id').value = s ? s.id : '';
+      // Date/time/doctor create the consultation slots, so they are fixed once saved
+      ['sc-doc-id', 'sc-date', 'sc-start', 'sc-end'].forEach(f => document.getElementById(f).disabled = !!s);
+      document.getElementById('sc-lock-note').style.display = s ? 'block' : 'none';
+      if (s) {
+        document.getElementById('sc-doc-id').value = s.doctorId;
+        document.getElementById('sc-date').value = s.scheduleDate;
+        document.getElementById('sc-start').value = s.startTime;
+        document.getElementById('sc-end').value = s.endTime;
+        document.getElementById('sc-room').value = s.roomNumber || '';
+        document.getElementById('sc-type').value = s.scheduleType || 'CONSULTATION';
+      }
+    }
+
+    function openShiftModal(id) {
+      const s = id ? shifts.find(x => x.id === id) : null;
+      setModalMode('shiftModal', 'shiftModalTitle', s,
+        '<i class="fa-solid fa-layer-group"></i> Add Hospital Shift', `<i class="fa-solid fa-pen"></i> Edit Shift #${id}`);
+      document.getElementById('sh-id').value = s ? s.id : '';
+      if (s) {
+        document.getElementById('sh-name').value = s.shiftName;
+        document.getElementById('sh-start').value = s.startTime;
+        document.getElementById('sh-end').value = s.endTime;
+        document.getElementById('sh-type').value = s.shiftType;
+      }
+    }
+
+    function openRosterModal(id) {
+      if (!shifts.length) { alert('Please create a shift first (Shifts tab).'); return; }
+      const r = id ? rosters.find(x => x.id === id) : null;
+      setModalMode('rosterModal', 'rosterModalTitle', r,
+        '<i class="fa-solid fa-users-gear"></i> Assign Roster Shift', `<i class="fa-solid fa-pen"></i> Edit Roster #${id}`);
+      document.getElementById('ros-id').value = r ? r.id : '';
+      if (r) {
+        document.getElementById('ros-doc-id').value = r.doctorId;
+        document.getElementById('ros-shift-id').value = r.shiftId;
+        document.getElementById('ros-date').value = r.rosterDate;
+        document.getElementById('ros-room').value = r.roomNumber || '';
+      }
+    }
+
+    function openLeaveModal(id) {
+      const l = id ? leaves.find(x => x.id === id) : null;
+      setModalMode('leaveModal', 'leaveModalTitle', l,
+        '<i class="fa-solid fa-user-slash"></i> Apply Doctor Leave', `<i class="fa-solid fa-pen"></i> Edit Leave #${id}`);
+      document.getElementById('lv-id').value = l ? l.id : '';
+      if (l) {
+        document.getElementById('lv-doc-id').value = l.doctorId;
+        document.getElementById('lv-type').value = l.leaveType;
+        document.getElementById('lv-sdate').value = l.startDate;
+        document.getElementById('lv-edate').value = l.endDate;
+        document.getElementById('lv-reason').value = l.reason || '';
+      }
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    // POST when the hidden id is empty, otherwise PUT to /{id}
+    async function saveRecord(modalId, idField, basePath, body, reload, successMsg) {
+      const id = document.getElementById(idField).value;
+      try {
+        id ? await api(`${basePath}/${id}`, 'PUT', body) : await api(basePath, 'POST', body);
+        closeModal(modalId);
+        await reload();
+        if (successMsg) alert('✅ ' + successMsg(!!id));
+      } catch (err) {
+        alert('❌ Could not save:\n' + err.message);
+      }
+    }
+
+    function saveSpec(e) {
+      e.preventDefault();
+      saveRecord('specModal', 'sp-id', `${DS}/specializations`, {
+        name: document.getElementById('sp-name').value.trim(),
+        description: document.getElementById('sp-desc').value.trim()
+      }, loadSpecializations);
+    }
+
+    function saveAvail(e) {
+      e.preventDefault();
+      saveRecord('availModal', 'av-id', `${DS}/availability`, {
+        doctorId: parseInt(document.getElementById('av-doc-id').value),
+        dayOfWeek: document.getElementById('av-day').value,
+        startTime: document.getElementById('av-start').value,
+        endTime: document.getElementById('av-end').value
+      }, loadAvailability);
+    }
+
+    function saveSched(e) {
+      e.preventDefault();
+      saveRecord('schedModal', 'sc-id', `${DS}/schedules`, {
+        doctorId: parseInt(document.getElementById('sc-doc-id').value),
+        scheduleDate: document.getElementById('sc-date').value,
+        startTime: document.getElementById('sc-start').value,
+        endTime: document.getElementById('sc-end').value,
+        roomNumber: document.getElementById('sc-room').value.trim(),
+        scheduleType: document.getElementById('sc-type').value
+      }, loadSchedules, edited => edited ? 'Schedule updated.' : 'Work schedule and 30-minute consultation slots created.');
+    }
+
+    function saveShift(e) {
+      e.preventDefault();
+      saveRecord('shiftModal', 'sh-id', `${DS}/shifts`, {
+        shiftName: document.getElementById('sh-name').value.trim(),
+        startTime: document.getElementById('sh-start').value,
+        endTime: document.getElementById('sh-end').value,
+        shiftType: document.getElementById('sh-type').value
+      }, loadShifts);
+    }
+
+    function saveRoster(e) {
+      e.preventDefault();
+      saveRecord('rosterModal', 'ros-id', `${DS}/rosters`, {
+        doctorId: parseInt(document.getElementById('ros-doc-id').value),
+        shiftId: parseInt(document.getElementById('ros-shift-id').value),
+        rosterDate: document.getElementById('ros-date').value,
+        roomNumber: document.getElementById('ros-room').value.trim()
+      }, loadRoster);
+    }
+
+    function saveLeave(e) {
+      e.preventDefault();
+      saveRecord('leaveModal', 'lv-id', `${DS}/leave`, {
+        doctorId: parseInt(document.getElementById('lv-doc-id').value),
+        leaveType: document.getElementById('lv-type').value,
+        startDate: document.getElementById('lv-sdate').value,
+        endDate: document.getElementById('lv-edate').value,
+        reason: document.getElementById('lv-reason').value.trim()
+      }, loadLeave);
+    }
+  </script>
+</body>
+</html>
