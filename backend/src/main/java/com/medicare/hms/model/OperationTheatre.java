@@ -27,6 +27,7 @@ public class OperationTheatre {
     @Id
     private String id;
 
+    //Room name (e.g., "OT-1"). Cannot be empty/null in the database
     @Column(nullable = false)
     private String suiteName;
 
