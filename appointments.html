@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Appointments — Medicare Hospital</title>
+  <meta name="description" content="View, manage and book your appointments at Medicare Hospital.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=20261004-2">
+  <style>
+    .page-hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a6e 50%, #0ea5e9 100%);
+      padding: 4rem 0 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-hero::after { content:''; position:absolute; right:-100px; top:-100px; width:500px; height:500px; background:radial-gradient(circle,rgba(14,165,233,0.15) 0%,transparent 70%); }
+    .page-hero-content { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem; }
+    .page-hero-tag { display:inline-block; background:rgba(56,189,248,0.15); color:var(--bright-cyan); padding:0.35rem 1rem; border-radius:var(--radius-full); font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:1rem; border:1px solid rgba(56,189,248,0.3); }
+    .page-hero h1 { color:#fff; font-size:2.4rem; margin-bottom:0.5rem; }
+    .page-hero h1 span { color:var(--bright-cyan); }
+    .page-hero p { color:rgba(255,255,255,0.7); font-size:1rem; }
+
+    /* Dashboard Stats */
+    .appt-stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      padding: 2rem 0;
+    }
+
+    .appt-stat-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      padding: 1.4rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .appt-stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    .appt-stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .appt-stat-num { font-size: 1.6rem; font-weight: 800; color: var(--primary-navy); line-height: 1; }
+    .appt-stat-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; margin-top: 0.2rem; }
+
+    /* Tabs */
+    .appt-tab-row {
+      display: flex;
+      gap: 0;
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      padding: 0.35rem;
+      margin-bottom: 1.75rem;
+      width: fit-content;
+    }
+
+    .appt-tab-btn {
+      padding: 0.65rem 1.5rem;
+      border-radius: calc(var(--radius-md) - 2px);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .appt-tab-btn .tab-count {
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      padding: 0.1rem 0.5rem;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+    }
+
+    .appt-tab-btn.active {
+      background: var(--primary-blue);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(30, 64, 175, 0.25);
+    }
+
+    .appt-tab-btn.active .tab-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Appointment Cards */
+    .appt-list { display: flex; flex-direction: column; gap: 1.1rem; }
+
+    .appt-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: var(--transition);
+      display: flex;
+      align-items: stretch;
+    }
+
+    .appt-card:hover { box-shadow: var(--shadow-md); transform: translateX(2px); }
+
+    .appt-card-accent {
+      width: 5px;
+      flex-shrink: 0;
+    }
+
+    .appt-card-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 60px 1fr auto auto;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .appt-doc-img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .appt-doc-name { font-weight: 700; color: var(--primary-navy); font-size: 0.95rem; }
+    .appt-doc-spec { font-size: 0.82rem; color: var(--text-muted); }
+
+    .appt-details { display: flex; flex-direction: column; gap: 0.25rem; }
+
+    .appt-detail-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.83rem;
+      color: var(--text-muted);
+    }
+
+    .appt-detail-item i { color: var(--primary-blue); width: 14px; }
+
+    .appt-status-badge {
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+
+    .status-upcoming { background: rgba(30,64,175,0.1); color: var(--primary-blue); }
+    .status-completed { background: rgba(16,185,129,0.1); color: #059669; }
+    .status-cancelled { background: rgba(220,38,38,0.1); color: var(--emergency-red); }
+    .status-pending { background: rgba(245,158,11,0.1); color: #d97706; }
+
+    .appt-actions { display: flex; flex-direction: column; gap: 0.4rem; }
+
+    .btn-appt-action {
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1.5px solid;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .btn-reschedule { border-color: var(--primary-blue); color: var(--primary-blue); }
+    .btn-reschedule:hover { background: var(--primary-blue); color: #fff; }
+
+    .btn-cancel-appt { border-color: #ef4444; color: #dc2626; }
+    .btn-cancel-appt:hover { background: #dc2626; color: #fff; }
+
+    .btn-view-report { border-color: var(--success-green); color: var(--success-green); }
+    .btn-view-report:hover { background: var(--success-green); color: #fff; }
+
+    /* Book New Button */
+    .appt-book-fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 999;
+      background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 1rem 1.75rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(30, 64, 175, 0.45);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: var(--transition);
+    }
+
+    .appt-book-fab:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(30, 64, 175, 0.55); }
+
+    /* Token Card */
+    .token-card {
+      background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+      color: #fff;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .token-label { font-size: 0.82rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.06em; }
+    .token-num { font-size: 2.5rem; font-weight: 800; font-family: var(--font-heading); line-height: 1; }
+    .token-doc { font-size: 0.9rem; opacity: 0.85; }
+
+    .token-qr {
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,0.15);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+
+    /* Modal */
+    .modal-overlay-custom {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.6);
+      z-index: 5000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: var(--transition);
+    }
+    .modal-overlay-custom.active { opacity: 1; visibility: visible; }
+    .modal-box-custom {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 500px;
+      margin: 1rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(20px);
+      transition: var(--transition);
+    }
+    .modal-overlay-custom.active .modal-box-custom { transform: translateY(0); }
+    .modal-head-custom {
+      background: linear-gradient(135deg, var(--primary-blue), var(--accent-cyan));
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+    }
+    .modal-head-custom h3 { font-size: 1.1rem; }
+    .modal-close-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+    .modal-close-btn:hover { background: rgba(255,255,255,0.35); }
+    .modal-body-custom { padding: 1.75rem; }
+    .modal-form .form-group { margin-bottom: 1.1rem; }
+    .modal-form label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-navy); margin-bottom: 0.4rem; }
+    .modal-form input, .modal-form select, .modal-form textarea { width: 100%; padding: 0.85rem 1rem; border: 1.5px solid var(--border-medium); border-radius: var(--radius-md); background: var(--bg-main); font-size: 0.9rem; color: var(--text-dark); }
+    .modal-form input:focus, .modal-form select:focus { outline: none; border-color: var(--primary-blue); }
+
+    @media (max-width: 768px) {
+      .appt-stat-row { grid-template-columns: 1fr 1fr; }
+      .appt-card-body { grid-template-columns: 48px 1fr; }
+      .appt-details, .appt-actions { display: none; }
+    }
+  </style>
+  <script src="js/auth.js?v=20261004-2"></script>
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="container top-bar-content">
+      <div class="top-bar-info">
+        <div class="top-bar-info-item"><i class="fa-solid fa-phone-flip"></i><span>Channeling: <strong>0115 777 888</strong></span></div>
+        <div class="top-bar-info-item"><i class="fa-solid fa-truck-medical emergency-highlight"></i><span>Emergency: <strong class="emergency-highlight">0115 577 222</strong></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="main-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <div class="logo-icon-wrap"><i class="fa-solid fa-plus"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">MEDICARE <span>HOSPITAL</span></span>
+          <span class="brand-tagline">Healthcare &amp; Research Center</span>
+        </div>
+      </a>
+      <nav class="nav-menu" id="navMenu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="departments.html" class="nav-link">Departments</a>
+        <a href="doctors.html" class="nav-link">Find a Doctor</a>
+        <a href="appointments.html" class="nav-link active">Appointments</a>
+        <a href="packages.html" class="nav-link">Packages</a>
+        <a href="index.html#contact" class="nav-link">Contact</a>
+      </nav>
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+        <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container page-hero-content">
+      <div>
+        <div class="page-hero-tag"><i class="fa-solid fa-calendar-check"></i> Patient Portal</div>
+        <h1 id="pageTitle">My <span>Appointments</span></h1>
+        <p id="pageSubtitle">Manage all your upcoming, past and cancelled appointments in one place.</p>
+      </div>
+      <button class="btn btn-primary" style="background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.4); backdrop-filter:blur(8px);" onclick="openBookModal()" data-roles="patient staff admin">
+        <i class="fa-solid fa-plus"></i> Book New Appointment
+      </button>
+    </div>
+  </section>
+
+  <div class="container">
+    <!-- Stats Row -->
+    <div class="appt-stats-row">
+      <div class="appt-stat-card">
+        <div class="appt-stat-icon" style="background:rgba(30,64,175,0.1);color:var(--primary-blue);"><i class="fa-solid fa-calendar-check"></i></div>
+        <div><div class="appt-stat-num" id="statUpcoming">0</div><div class="appt-stat-label">Upcoming</div></div>
+      </div>
+      <div class="appt-stat-card">
+        <div class="appt-stat-icon" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fa-solid fa-circle-check"></i></div>
+        <div><div class="appt-stat-num" id="statCompleted">0</div><div class="appt-stat-label">Completed</div></div>
+      </div>
+      <div class="appt-stat-card">
+        <div class="appt-stat-icon" style="background:rgba(220,38,38,0.1);color:#dc2626;"><i class="fa-solid fa-circle-xmark"></i></div>
+        <div><div class="appt-stat-num" id="statCancelled">0</div><div class="appt-stat-label">Cancelled</div></div>
+      </div>
+      <div class="appt-stat-card">
+        <div class="appt-stat-icon" style="background:rgba(245,158,11,0.1);color:#d97706;"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div><div class="appt-stat-num" id="statPending">0</div><div class="appt-stat-label">Pending</div></div>
+      </div>
+    </div>
+
+    <!-- Next Appointment Token Card -->
+    <div class="token-card">
+      <div>
+        <div class="token-label">Next Appointment Token</div>
+        <div class="token-num" id="tokenNum">—</div>
+        <div class="token-doc" id="tokenDoc">Loading...</div>
+        <div style="margin-top:0.5rem; font-size:0.85rem; opacity:0.8;" id="tokenWhen"></div>
+      </div>
+      <div class="token-qr"><i class="fa-solid fa-qrcode"></i></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="appt-tab-row">
+      <button class="appt-tab-btn active" onclick="switchTab(this, 'upcoming')"><i class="fa-solid fa-clock"></i> Upcoming <span class="tab-count" id="countUpcoming">0</span></button>
+      <button class="appt-tab-btn" onclick="switchTab(this, 'completed')"><i class="fa-solid fa-circle-check"></i> Completed <span class="tab-count" id="countCompleted">0</span></button>
+      <button class="appt-tab-btn" onclick="switchTab(this, 'cancelled')"><i class="fa-solid fa-circle-xmark"></i> Cancelled <span class="tab-count" id="countCancelled">0</span></button>
+    </div>
+
+    <!-- Appointment List -->
+    <div class="appt-list" id="apptList"></div>
+  </div>
+
+  <!-- Book Appointment Modal -->
+  <div class="modal-overlay-custom" id="bookModal">
+    <div class="modal-box-custom">
+      <div class="modal-head-custom">
+        <h3 id="bookModalTitle"><i class="fa-solid fa-calendar-plus"></i> Book New Appointment</h3>
+        <button class="modal-close-btn" onclick="closeBookModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body-custom">
+        <form class="modal-form" id="bookForm" onsubmit="submitBook(event)">
+          <input type="hidden" id="apptId">
+          <div class="form-group">
+            <label>Patient Full Name *</label>
+            <input type="text" id="apptPatientName" class="form-control" placeholder="e.g. Ruwan Perera" required>
+          </div>
+          <div class="form-group">
+            <label>Mobile Phone *</label>
+            <input type="tel" pattern="(?:0|\+94(?: |-)?)[0-9]{2}(?: |-)?[0-9]{3}(?: |-)?[0-9]{4}" title="Sri Lankan number, e.g. 0771234567 or +94 77 123 4567" id="apptPatientPhone" class="form-control" placeholder="0771234567" required>
+          </div>
+          <div class="form-group">
+            <label>Email (optional)</label>
+            <input type="email" id="apptPatientEmail" class="form-control" placeholder="ruwan@example.com">
+          </div>
+          <div class="form-group">
+            <label>Select Doctor *</label>
+            <select id="apptDoctorSelect" class="form-control" required>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Preferred Date *</label>
+            <input type="date" id="apptBookDate" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Time Slot *</label>
+            <select id="apptTimeSlot" class="form-control" required>
+              <option>Morning (09:00 AM - 12:00 PM)</option>
+              <option>Afternoon (01:00 PM - 04:00 PM)</option>
+              <option selected>Evening (05:00 PM - 08:00 PM)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btnSubmitAppt" style="width:100%;">
+            <i class="fa-solid fa-circle-check"></i> Confirm Booking
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="appt-book-fab" onclick="openBookModal()" data-roles="patient staff admin">
+    <i class="fa-solid fa-plus"></i> Book Appointment
+  </button>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 Medicare Hospital Management System. All Rights Reserved.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/api.js?v=20261004-2"></script>
+  <script>
+    // Appointments are loaded from MySQL through GET /api/appointments
+    let allAppointments = [];
+    let doctorList = [];
+    let currentTab = 'upcoming';
+
+    const statusConfig = {
+      upcoming: { class:'status-upcoming', icon:'fa-clock', label:'Upcoming' },
+      completed: { class:'status-completed', icon:'fa-circle-check', label:'Completed' },
+      cancelled: { class:'status-cancelled', icon:'fa-circle-xmark', label:'Cancelled' },
+      pending: { class:'status-pending', icon:'fa-hourglass-half', label:'Pending Confirmation' }
+    };
+
+    const accentColors = {
+      upcoming: '#1e40af', completed: '#059669', cancelled: '#dc2626', pending: '#d97706'
+    };
+
+    const todayStr = () => new Date().toISOString().split('T')[0];
+
+    // Decide which tab an appointment belongs to
+    function tabOf(a) {
+      if (a.status === 'CANCELLED') return 'cancelled';
+      if (a.status === 'COMPLETED' || a.appointmentDate < todayStr()) return 'completed';
+      return 'upcoming';
+    }
+
+    function uiStatus(a) {
+      const tab = tabOf(a);
+      if (tab === 'upcoming' && a.status === 'PENDING') return 'pending';
+      return tab;
+    }
+
+    function formatDate(iso) {
+      return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    async function loadAppointments() {
+      try {
+        // Patients only get their own bookings (matched on their login email)
+        const user = Auth.currentUser();
+        allAppointments = Auth.hasRole('patient')
+          ? await api('/appointments?email=' + encodeURIComponent(user.email))
+          : await api('/appointments');
+        allAppointments.sort((x, y) => x.appointmentDate.localeCompare(y.appointmentDate));
+        updateStats();
+        renderAppts(allAppointments.filter(a => tabOf(a) === currentTab));
+      } catch (err) {
+        document.getElementById('apptList').innerHTML =
+          `<div style="text-align:center;padding:3rem;color:#dc2626;"><i class="fa-solid fa-circle-exclamation" style="font-size:2rem;display:block;margin-bottom:1rem;"></i>${esc(err.message)}</div>`;
+      }
+    }
+
+    function updateStats() {
+      const count = tab => allAppointments.filter(a => tabOf(a) === tab).length;
+      const pending = allAppointments.filter(a => uiStatus(a) === 'pending').length;
+      document.getElementById('statUpcoming').textContent = count('upcoming');
+      document.getElementById('statCompleted').textContent = count('completed');
+      document.getElementById('statCancelled').textContent = count('cancelled');
+      document.getElementById('statPending').textContent = pending;
+      document.getElementById('countUpcoming').textContent = count('upcoming');
+      document.getElementById('countCompleted').textContent = count('completed');
+      document.getElementById('countCancelled').textContent = count('cancelled');
+
+      // Next appointment card
+      const next = allAppointments.find(a => tabOf(a) === 'upcoming');
+      document.getElementById('tokenNum').textContent = next ? next.referenceCode : '—';
+      document.getElementById('tokenDoc').textContent = next
+        ? `${next.doctor.name} — ${next.doctor.department ? next.doctor.department.name : ''}`
+        : 'No upcoming appointments';
+      document.getElementById('tokenWhen').innerHTML = next
+        ? `<i class="fa-regular fa-calendar"></i> ${esc(formatDate(next.appointmentDate))} &nbsp;|&nbsp; <i class="fa-regular fa-clock"></i> ${esc(next.timeSlot)}`
+        : '';
+    }
+
+    function renderAppts(list) {
+      const el = document.getElementById('apptList');
+      if (!list.length) {
+        el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted);"><i class="fa-solid fa-calendar-xmark" style="font-size:3rem;margin-bottom:1rem;color:var(--border-medium);display:block;"></i><h3>No appointments found</h3></div>';
+        return;
+      }
+      el.innerHTML = list.map(a => {
+        const status = uiStatus(a);
+        const sc = statusConfig[status];
+        const color = accentColors[status];
+        const isUpcoming = status === 'upcoming' || status === 'pending';
+        const doc = a.doctor || {};
+        const img = doc.imageUrl || 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=100&q=80';
+        return `
+          <div class="appt-card">
+            <div class="appt-card-accent" style="background:${color};"></div>
+            <div class="appt-card-body">
+              <img class="appt-doc-img" src="${esc(img)}" alt="${esc(doc.name)}">
+              <div>
+                <div class="appt-doc-name">${esc(doc.name)}</div>
+                <div class="appt-doc-spec">${esc(doc.department ? doc.department.name : '')}</div>
+                <div style="font-size:0.78rem;color:var(--text-light);margin-top:0.25rem;">Ref: <strong style="color:var(--primary-navy);">${esc(a.referenceCode)}</strong></div>
+                <div style="font-size:0.78rem;color:var(--text-light);">Patient: <strong>${esc(a.patientName)}</strong> (${esc(a.patientPhone)})</div>
+              </div>
+              <div class="appt-details">
+                <div class="appt-detail-item"><i class="fa-regular fa-calendar"></i> ${esc(formatDate(a.appointmentDate))}</div>
+                <div class="appt-detail-item"><i class="fa-regular fa-clock"></i> ${esc(a.timeSlot)}</div>
+                <div class="appt-detail-item"><i class="fa-solid fa-door-open"></i> ${esc(doc.roomNumber || '')}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.6rem;">
+                <span class="appt-status-badge ${sc.class}"><i class="fa-solid ${sc.icon}"></i> ${sc.label}</span>
+                ${isUpcoming ? `
+                  <button class="btn-appt-action btn-reschedule" onclick="openEditModal(${a.id})" data-roles="patient staff admin"><i class="fa-solid fa-pen"></i> Edit / Reschedule</button>
+                  <button class="btn-appt-action btn-view-report" onclick="setStatus(${a.id}, 'COMPLETED')" data-roles="doctor staff admin"><i class="fa-solid fa-check"></i> Mark Completed</button>
+                  <button class="btn-appt-action btn-cancel-appt" onclick="setStatus(${a.id}, 'CANCELLED')" data-roles="patient staff admin"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                ` : `
+                  <button class="btn-appt-action btn-cancel-appt" onclick="deleteAppt(${a.id})" data-roles="staff admin"><i class="fa-solid fa-trash"></i> Delete</button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function switchTab(el, tab) {
+      document.querySelectorAll('.appt-tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      currentTab = tab;
+      renderAppts(allAppointments.filter(a => tabOf(a) === tab));
+    }
+
+    // ---------- Modal: create + edit ----------
+    async function ensureDoctors() {
+      if (doctorList.length) return;
+      doctorList = await api('/doctors');
+      fillSelect(document.getElementById('apptDoctorSelect'), doctorList, d => d.id,
+        d => `${d.name} – ${d.department ? d.department.name : 'General'}`, '-- Choose Doctor --');
+    }
+
+    async function openBookModal() {
+      try { await ensureDoctors(); } catch (err) { alert('❌ ' + err.message); return; }
+      document.getElementById('bookForm').reset();
+      document.getElementById('apptId').value = '';
+      lockPatientFields();
+      document.getElementById('apptBookDate').min = todayStr();
+      document.getElementById('bookModalTitle').innerHTML = '<i class="fa-solid fa-calendar-plus"></i> Book New Appointment';
+      document.getElementById('btnSubmitAppt').innerHTML = '<i class="fa-solid fa-circle-check"></i> Confirm Booking';
+      document.getElementById('bookModal').classList.add('active');
+    }
+
+    async function openEditModal(id) {
+      try { await ensureDoctors(); } catch (err) { alert('❌ ' + err.message); return; }
+      const a = allAppointments.find(x => x.id === id);
+      if (!a) return;
+      document.getElementById('apptId').value = a.id;
+      document.getElementById('apptPatientName').value = a.patientName;
+      document.getElementById('apptPatientPhone').value = a.patientPhone;
+      document.getElementById('apptPatientEmail').value = a.patientEmail || '';
+      lockPatientFields();
+      document.getElementById('apptDoctorSelect').value = a.doctor ? a.doctor.id : '';
+      document.getElementById('apptBookDate').min = todayStr();
+      document.getElementById('apptBookDate').value = a.appointmentDate;
+      const slot = document.getElementById('apptTimeSlot');
+      if (![...slot.options].some(o => o.value === a.timeSlot)) {
+        slot.insertAdjacentHTML('beforeend', `<option>${esc(a.timeSlot)}</option>`);
+      }
+      slot.value = a.timeSlot;
+      document.getElementById('bookModalTitle').innerHTML = `<i class="fa-solid fa-calendar-pen"></i> Edit Appointment ${esc(a.referenceCode)}`;
+      document.getElementById('btnSubmitAppt').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+      document.getElementById('bookModal').classList.add('active');
+    }
+
+    // A patient always books under their own account, so the booking shows up in their list
+    function lockPatientFields() {
+      const emailField = document.getElementById('apptPatientEmail');
+      if (!Auth.hasRole('patient')) { emailField.readOnly = false; return; }
+      const user = Auth.currentUser();
+      const nameField = document.getElementById('apptPatientName');
+      if (!nameField.value) nameField.value = [user.firstName, user.lastName].filter(Boolean).join(' ');
+      emailField.value = user.email;
+      emailField.readOnly = true;
+    }
+
+    function closeBookModal() { document.getElementById('bookModal').classList.remove('active'); }
+    document.getElementById('bookModal').addEventListener('click', function(e) { if (e.target === this) closeBookModal(); });
+
+    async function submitBook(e) {
+      e.preventDefault();
+      const id = document.getElementById('apptId').value;
+      const btn = document.getElementById('btnSubmitAppt');
+      const label = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+      btn.disabled = true;
+
+      const data = {
+        doctorId: parseInt(document.getElementById('apptDoctorSelect').value),
+        patientName: document.getElementById('apptPatientName').value.trim(),
+        patientPhone: document.getElementById('apptPatientPhone').value.trim(),
+        patientEmail: document.getElementById('apptPatientEmail').value.trim() || null,
+        appointmentDate: document.getElementById('apptBookDate').value,
+        timeSlot: document.getElementById('apptTimeSlot').value
+      };
+
+      try {
+        const saved = id
+          ? await api(`/appointments/${id}`, 'PUT', data)
+          : await api('/appointments', 'POST', data);
+        closeBookModal();
+        await loadAppointments();
+        alert(`✅ Appointment ${id ? 'updated' : 'booked'}!\nReference: ${saved.referenceCode}\nDoctor: ${saved.doctor.name}\nDate: ${saved.appointmentDate}`);
+      } catch (err) {
+        alert('❌ Could not save appointment:\n' + err.message);
+      } finally {
+        btn.innerHTML = label;
+        btn.disabled = false;
+      }
+    }
+
+    async function setStatus(id, status) {
+      const word = status === 'CANCELLED' ? 'cancel' : 'mark as completed';
+      if (!confirm(`Are you sure you want to ${word} this appointment?`)) return;
+      try {
+        await api(`/appointments/${id}/status?status=${status}`, 'PUT');
+        await loadAppointments();
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    }
+
+    async function deleteAppt(id) {
+      if (!confirm('Permanently delete this appointment record?')) return;
+      try {
+        await api(`/appointments/${id}`, 'DELETE');
+        await loadAppointments();
+      } catch (err) {
+        alert('❌ Could not delete appointment:\n' + err.message);
+      }
+    }
+
+    document.getElementById('mobileToggle').addEventListener('click', () => document.getElementById('navMenu').classList.toggle('active'));
+
+    // Staff, doctors and admins see every patient's appointments
+    if (!Auth.hasRole('patient')) {
+      document.getElementById('pageTitle').innerHTML = 'All <span>Appointments</span>';
+      document.getElementById('pageSubtitle').textContent = 'Every patient booking in the hospital system.';
+    }
+
+    loadAppointments();
+  </script>
+</body>
+</html>
